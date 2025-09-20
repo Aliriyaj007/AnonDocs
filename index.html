@@ -1,204 +1,308 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>AnonDocs — Private & Anonymous</title>
-
-  <link rel="stylesheet" href="style.css">
-
-  <!-- CryptoJS (AES) CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-  <script src="app.js" defer></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="Create, edit, and share secure, self-destructing documents. All data is encrypted client-side." />
+    <title>AnonDocs — Secure Private Document Sharing</title>
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Core Stylesheet -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Topbar -->
-  <header class="topbar">
-    <div class="left">
-      <button id="menuToggle" class="icon-btn" data-tip-key="menu" data-tip="Open documents sidebar">☰</button>
-      <div class="brand">AnonDocs</div>
-      <input id="titleInput" class="title-input" placeholder="Untitled document" />
-
-      <div class="top-actions">
-        <button id="newBtn" class="btn" data-tip-key="new" data-tip="New document">New</button>
-        <button id="saveBtn" class="btn" data-tip-key="save" data-tip="Save (Ctrl/Cmd+S)">Save</button>
-        <button id="shareBtn" class="btn primary" data-tip-key="share" data-tip="Share (password-protected link)">Share</button>
-      </div>
-    </div>
-
-    <div class="right">
-      <span id="statusBadge" class="badge">Saved</span>
-      <select id="themeSelect" class="theme-select" title="Theme" data-tip-key="theme" data-tip="Theme">
-        <option value="dark">Dark</option>
-        <option value="light">Light</option>
-        <option value="colored">Colored</option>
-      </select>
-    </div>
-  </header>
-
-  <!-- Compact Toolbar -->
-  <div class="toolbar" id="toolbar">
-    <select id="fontFamily" title="Font family" data-tip-key="font" data-tip="Font family">
-      <option>Inter</option>
-      <option>Arial</option>
-      <option>Georgia</option>
-      <option>"Times New Roman"</option>
-      <option>Verdana</option>
-      <option>Courier New</option>
-    </select>
-
-    <select id="fontSize" title="Font size" data-tip-key="size" data-tip="Font size">
-      <option value="3">Normal</option>
-      <option value="4">Large</option>
-      <option value="5">X-Large</option>
-      <option value="6">Huge</option>
-    </select>
-
-    <select id="blockFormat" title="Paragraph / Headings" data-tip-key="style" data-tip="Paragraph / Headings">
-      <option value="P">Normal</option>
-      <option value="H1">Heading 1</option>
-      <option value="H2">Heading 2</option>
-      <option value="H3">Heading 3</option>
-    </select>
-
-    <button class="icon-btn" data-cmd="bold" data-tip-key="bold" data-tip="Bold (Ctrl/Cmd+B)"><b>B</b></button>
-    <button class="icon-btn" data-cmd="italic" data-tip-key="italic" data-tip="Italic (Ctrl/Cmd+I)"><i>I</i></button>
-    <button class="icon-btn" data-cmd="underline" data-tip-key="underline" data-tip="Underline (Ctrl/Cmd+U)"><u>U</u></button>
-    <button class="icon-btn" data-cmd="strikeThrough" data-tip-key="strike" data-tip="Strike-through">S</button>
-
-    <input id="textColor" type="color" title="Text color" data-tip-key="textcolor" data-tip="Text color" />
-    <input id="highlightColor" type="color" title="Highlight color" data-tip-key="highlight" data-tip="Highlight color" />
-
-    <button class="icon-btn" data-cmd="insertUnorderedList" data-tip-key="ul" data-tip="Bulleted list">•</button>
-    <button class="icon-btn" data-cmd="insertOrderedList" data-tip-key="ol" data-tip="Numbered list">1.</button>
-    <button class="icon-btn" data-cmd="outdent" data-tip-key="outdent" data-tip="Decrease indent">«</button>
-    <button class="icon-btn" data-cmd="indent" data-tip-key="indent" data-tip="Increase indent">»</button>
-
-    <button id="linkBtn" class="icon-btn" data-tip-key="link" data-tip="Insert link (Ctrl/Cmd+K)">🔗</button>
-    <label class="icon-btn upload" data-tip-key="image" data-tip="Insert image">
-      🖼<input id="imageInput" type="file" accept="image/*" />
-    </label>
-
-    <div class="toolbar-spacer"></div>
-
-    <button id="findBtn" class="btn" data-tip-key="find" data-tip="Find & replace">Find</button>
-    <button id="undoBtn" class="btn" data-tip-key="undo" data-tip="Undo (Ctrl/Cmd+Z)">↶</button>
-    <button id="redoBtn" class="btn" data-tip-key="redo" data-tip="Redo (Ctrl/Cmd+Y)">↷</button>
-
-    <button id="printBtn" class="btn ghost" data-tip-key="print" data-tip="Print document">Print</button>
-  </div>
-
-  <!-- Layout -->
-  <div class="layout">
-    <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar">
-      <div class="sidebar-head">
-        <div>Documents</div>
-        <div>
-          <button id="importBtn" class="small">Import</button>
-          <button id="exportBtn" class="small">Export</button>
+    <!-- Onboarding Guide Overlays -->
+    <div id="onboardingOverlay" class="onboarding-overlay hidden">
+        <div class="onboarding-step" id="onboardingStep1">
+            <div class="onboarding-content">
+                <h3>Welcome to AnonDocs</h3>
+                <p>👋 Let's take a quick tour. This won't take long.</p>
+                <button id="onboardingNext1" class="btn primary">Next</button>
+            </div>
         </div>
-      </div>
-      <div id="docsList" class="docs-list"></div>
-    </aside>
-
-    <!-- Editor page -->
-    <main class="main">
-      <div id="page" class="page">
-        <div id="editor" class="editor" contenteditable="true" spellcheck="true" placeholder="Start writing..."></div>
-      </div>
-
-      <footer class="statusbar">
-        <div id="stats">0 words · 0 chars</div>
-        <div id="zoomLabel">100%</div>
-      </footer>
-    </main>
-  </div>
-
-  <!-- Share Modal -->
-  <div id="shareModal" class="modal hidden">
-    <div class="modal-card">
-      <h3>Share Document</h3>
-
-      <div class="form-row">
-        <label>Expiry
-          <select id="shareExpiry">
-            <option value="0">Never</option>
-            <option value="1">1 day</option>
-            <option value="7" selected>7 days</option>
-            <option value="30">30 days</option>
-          </select>
-        </label>
-      </div>
-
-      <div class="form-row">
-        <label><input id="sharePublic" type="checkbox" /> Public link (no password)</label>
-      </div>
-
-      <div class="form-row" id="passRow">
-        <label>Password
-          <input id="sharePassword" type="password" placeholder="Enter password for private link (required)" />
-        </label>
-      </div>
-
-      <div class="row actions">
-        <button id="generateShareBtn" class="primary">Generate Link</button>
-        <button class="ghost" onclick="closeModal('shareModal')">Cancel</button>
-      </div>
-
-      <hr />
-
-      <div id="shareResult" class="share-result hidden">
-        <label>Share URL</label>
-        <input id="shareUrl" readonly />
-        <div class="row actions">
-          <button id="copyShareBtn" class="small">Copy</button>
-          <button class="ghost" onclick="closeModal('shareModal')">Close</button>
+        <div class="onboarding-step hidden" id="onboardingStep2">
+            <div class="onboarding-content">
+                <h3>Start Creating</h3>
+                <p>✏️ Click "Get Started" to create your first secure document.</p>
+                <div class="onboarding-actions">
+                    <button id="onboardingBack2" class="btn ghost">Back</button>
+                    <button id="onboardingNext2" class="btn primary">Get Started</button>
+                </div>
+            </div>
         </div>
-        <div id="shareMeta" class="meta"></div>
-      </div>
     </div>
-  </div>
 
-  <!-- Manage Shared Links Modal -->
-  <div id="manageModal" class="modal hidden">
-    <div class="modal-card">
-      <h3>Shared Links</h3>
-      <div id="sharedList" class="shared-list"></div>
-      <div class="row actions"><button class="ghost" onclick="closeModal('manageModal')">Close</button></div>
-    </div>
-  </div>
-
-  <!-- Password modal (open shared link) -->
-  <div id="passwordModal" class="modal hidden">
-    <div class="modal-card">
-      <h3>Enter Password</h3>
-      <div class="form-row">
-        <input id="openPassword" type="password" placeholder="Password" />
-      </div>
-      <div class="row actions">
-        <button id="openPwdBtn" class="primary">Open</button>
-        <button class="ghost" onclick="closeModal('passwordModal')">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Viewer overlay for shared doc -->
-  <div id="viewerOverlay" class="viewer hidden">
-    <div class="viewer-card">
-      <div class="viewer-head">
-        <div id="viewerTitle">Shared Document</div>
-        <div>
-          <button id="viewerSaveBtn" class="small">Save Copy</button>
-          <button class="ghost" id="viewerCloseBtn">Close</button>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1><span class="gold-accent">AnonDocs</span></h1>
+                <p>Anonymous, encrypted & self-destructing notes in one click.</p>
+                <div class="hero-actions">
+                    <button id="createNoteBtn" class="btn primary">+ Create Note</button>
+                    <button id="viewDocsBtn" class="btn ghost">📄 Docs</button>
+                </div>
+            </div>
         </div>
-      </div>
-      <div id="viewerContent" class="viewer-content"></div>
-    </div>
-  </div>
+    </section>
 
-  <!-- Toasts & Tooltip -->
-  <div id="toasts" class="toasts"></div>
-  <div id="tooltip" class="tooltip hidden"></div>
+    <div class="app-container">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="container">
+                <div class="topbar-content">
+                    <div class="left-section">
+                        <button id="viewDocsBtnMobile" class="btn docs-toggle">
+                            <i class="fas fa-folder"></i> Docs
+                        </button>
+                        <div class="brand">AnonDocs</div>
+                        <input id="titleInput" class="title-input" placeholder="Untitled document" />
+                    </div>
+                    <div class="right-section">
+                        <div class="top-actions">
+                            <button id="newBtn" class="btn" data-tip="New document (Ctrl+N)">
+                                <i class="fas fa-plus"></i> New
+                            </button>
+                            <button id="saveBtn" class="btn" data-tip="Save (Ctrl/Cmd+S)">
+                                <i class="fas fa-save"></i> Save
+                            </button>
+                            <button id="shareBtn" class="btn primary" data-tip="Create Secure Note">
+                                <i class="fas fa-shield-alt"></i> Secure Share
+                            </button>
+                        </div>
+                        <span id="statusBadge" class="badge"><i class="fas fa-check-circle"></i> Saved</span>
+                        <select id="themeSelect" class="theme-select" data-tip="Change Theme">
+                            <option value="dark">Dark</option>
+                            <option value="light">Light</option>
+                        </select>
+                        <button id="settingsBtn" class="icon-btn" data-tip="Settings">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Compact Toolbar -->
+        <div class="toolbar" id="toolbar">
+            <div class="container">
+                <div class="toolbar-content">
+                    <select id="fontFamily" data-tip="Font Family">
+                        <option>Inter</option>
+                        <option>Arial</option>
+                        <option>Georgia</option>
+                        <option>"Times New Roman"</option>
+                        <option>Verdana</option>
+                        <option>Courier New</option>
+                    </select>
+                    <select id="fontSize" data-tip="Font Size">
+                        <option value="3">Normal</option>
+                        <option value="4">Large</option>
+                        <option value="5">X-Large</option>
+                        <option value="6">Huge</option>
+                    </select>
+                    <select id="blockFormat" data-tip="Paragraph / Headings">
+                        <option value="P">Normal</option>
+                        <option value="H1">Heading 1</option>
+                        <option value="H2">Heading 2</option>
+                        <option value="H3">Heading 3</option>
+                    </select>
+                    <button class="icon-btn" data-cmd="bold" data-tip="Bold (Ctrl/Cmd+B)">
+                        <i class="fas fa-bold"></i>
+                    </button>
+                    <button class="icon-btn" data-cmd="italic" data-tip="Italic (Ctrl/Cmd+I)">
+                        <i class="fas fa-italic"></i>
+                    </button>
+                    <button class="icon-btn" data-cmd="underline" data-tip="Underline (Ctrl/Cmd+U)">
+                        <i class="fas fa-underline"></i>
+                    </button>
+                    <button class="icon-btn" data-cmd="strikeThrough" data-tip="Strike-through">
+                        <i class="fas fa-strikethrough"></i>
+                    </button>
+                    <input id="textColor" type="color" value="#000000" data-tip="Text Color" />
+                    <input id="highlightColor" type="color" value="#ffff00" data-tip="Highlight Color" />
+                    <button class="icon-btn" data-cmd="insertUnorderedList" data-tip="Bulleted List">
+                        <i class="fas fa-list-ul"></i>
+                    </button>
+                    <button class="icon-btn" data-cmd="insertOrderedList" data-tip="Numbered List">
+                        <i class="fas fa-list-ol"></i>
+                    </button>
+                    <button class="icon-btn" data-cmd="outdent" data-tip="Decrease Indent">
+                        <i class="fas fa-outdent"></i>
+                    </button>
+                    <button class="icon-btn" data-cmd="indent" data-tip="Increase Indent">
+                        <i class="fas fa-indent"></i>
+                    </button>
+                    <button id="linkBtn" class="icon-btn" data-tip="Insert Link (Ctrl/Cmd+K)">
+                        <i class="fas fa-link"></i>
+                    </button>
+                    <label class="icon-btn upload" data-tip="Insert Image">
+                        <i class="fas fa-image"></i>
+                        <input id="imageInput" type="file" accept="image/*" />
+                    </label>
+                    <div class="toolbar-spacer"></div>
+                    <button id="findBtn" class="btn" data-tip="Find Text">
+                        <i class="fas fa-search"></i> Find
+                    </button>
+                    <button id="undoBtn" class="btn" data-tip="Undo (Ctrl/Cmd+Z)">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                    <button id="redoBtn" class="btn" data-tip="Redo (Ctrl/Cmd+Y)">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                    <button id="printBtn" class="btn ghost" data-tip="Print Document">
+                        <i class="fas fa-print"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Layout -->
+        <div class="layout">
+            <div class="container">
+                <!-- Sidebar -->
+                <aside id="sidebar" class="sidebar">
+                    <div class="sidebar-head">
+                        <div>Documents</div>
+                        <div class="sidebar-actions">
+                            <button id="importBtn" class="small" data-tip="Import Document">
+                                <i class="fas fa-file-import"></i>
+                            </button>
+                            <button id="exportBtn" class="small" data-tip="Export Document">
+                                <i class="fas fa-file-export"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="docsList" class="docs-list"></div>
+                </aside>
+                <!-- Editor page -->
+                <main class="main">
+                    <div id="page" class="page">
+                        <div id="editor" class="editor" contenteditable="true" spellcheck="true" placeholder="Start writing..."></div>
+                    </div>
+                    <footer class="statusbar">
+                        <div id="stats">0 words · 0 chars</div>
+                        <div id="zoomLabel">100%</div>
+                    </footer>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create & Share Note Modal -->
+    <div id="noteModal" class="modal hidden">
+        <div class="modal-card slide-up">
+            <div class="modal-header">
+                <h3 class="modal-title">🔒 Create a Secure Note</h3>
+                <button class="modal-close" onclick="closeModal('noteModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="form-row">
+                <label class="form-label">Reference Name (optional)</label>
+                <input id="noteReference" type="text" class="form-input" placeholder="e.g. Server password, API key" />
+            </div>
+            <div class="form-row">
+                <label class="form-label">Password (required)</label>
+                <input id="notePassword" type="password" class="form-input" placeholder="Enter password" />
+                <div class="password-strength">
+                    <div id="passwordStrengthBar" class="password-strength-bar"></div>
+                </div>
+            </div>
+            <div class="form-row">
+                <label class="form-label">Confirm Password</label>
+                <input id="notePasswordConfirm" type="password" class="form-input" placeholder="Re-enter password" />
+            </div>
+            <div class="form-row">
+                <label class="checkbox-container">
+                    <input id="selfDestruct" type="checkbox" checked />
+                    <span class="checkmark"></span>
+                    Self-destruct after first read
+                </label>
+            </div>
+            <div class="form-row">
+                <label class="checkbox-container">
+                    <input id="destructNotify" type="checkbox" />
+                    <span class="checkmark"></span>
+                    Notify by email when destroyed
+                </label>
+                <input id="notifyEmail" type="email" class="form-input" placeholder="Enter email (optional)" style="display:none; margin-top: 8px;" />
+            </div>
+            <div class="form-row">
+                <label class="form-label">Expiration</label>
+                <select id="noteExpiry" class="form-select">
+                    <option value="0">Never</option>
+                    <option value="1">1 hour</option>
+                    <option value="24">24 hours</option>
+                    <option value="168" selected>7 days</option>
+                </select>
+            </div>
+            <div class="row actions">
+                <button id="generateNoteBtn" class="btn primary">
+                    <i class="fas fa-link"></i> Generate Secure Link
+                </button>
+                <button class="btn ghost" onclick="closeModal('noteModal')">Cancel</button>
+            </div>
+            <hr />
+            <div id="noteResult" class="share-result hidden">
+                <label class="form-label">Secure Share Link</label>
+                <input id="noteUrl" class="form-input" readonly />
+                <div class="row actions">
+                    <button id="copyNoteBtn" class="btn small">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                    <button id="qrNoteBtn" class="btn small">
+                        <i class="fas fa-qrcode"></i> QR Code
+                    </button>
+                    <button class="btn ghost" onclick="closeModal('noteModal')">Close</button>
+                </div>
+                <div id="noteMeta" class="meta" style="margin-top: 12px; font-size: 0.9rem; color: var(--muted);"></div>
+                <div id="destructionCountdown" class="destruction-countdown hidden">
+                    <i class="fas fa-bomb"></i>
+                    <span>This note will self-destruct in:</span>
+                    <span id="countdownTimer" class="countdown-timer"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Viewer overlay for shared doc -->
+    <div id="viewerOverlay" class="viewer hidden">
+        <div class="viewer-card">
+            <div class="viewer-head">
+                <div id="viewerTitle">Shared Document</div>
+                <div>
+                    <button id="viewerSaveBtn" class="small">Save Copy</button>
+                    <button class="ghost" id="viewerCloseBtn">Close</button>
+                </div>
+            </div>
+            <div id="viewerContent" class="viewer-content"></div>
+        </div>
+    </div>
+
+    <!-- Toasts & Tooltip -->
+    <div id="toasts" class="toasts"></div>
+    <div id="tooltip" class="tooltip hidden"></div>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker registered:', reg))
+                    .catch(err => console.log('Service Worker registration failed:', err));
+            });
+        }
+    </script>
+    <!-- CryptoJS (Loaded but unused; Web Crypto API is preferred) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <!-- Core Application Logic -->
+    <script src="app.js"></script>
 </body>
 </html>
