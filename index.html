@@ -13,6 +13,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <!-- PDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Core Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
@@ -156,9 +160,16 @@
                     <button id="redoBtn" class="btn" data-tip="Redo (Ctrl/Cmd+Y)">
                         <i class="fas fa-redo"></i>
                     </button>
-                    <button id="printBtn" class="btn ghost" data-tip="Print Document">
-                        <i class="fas fa-print"></i>
-                    </button>
+                    <div class="dropdown">
+                        <button id="downloadBtn" class="btn ghost" data-tip="Download Document">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                        <div id="downloadMenu" class="dropdown-content hidden">
+                            <button id="downloadTxtBtn" class="dropdown-item">Download as TXT</button>
+                            <button id="downloadPdfBtn" class="dropdown-item">Download as PDF</button>
+                            <button id="printBtn" class="dropdown-item">Print Document</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -268,6 +279,28 @@
                     <span>This note will self-destruct in:</span>
                     <span id="countdownTimer" class="countdown-timer"></span>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div id="qrModal" class="modal hidden">
+        <div class="modal-card slide-up">
+            <div class="modal-header">
+                <h3 class="modal-title">📱 Scan QR Code</h3>
+                <button class="modal-close" onclick="closeModal('qrModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="qr-container">
+                <div id="qrCode" style="width: 100%; text-align: center; padding: 20px;"></div>
+                <p style="text-align: center; margin-top: 10px;">Scan this QR code to access your secure note</p>
+            </div>
+            <div class="row actions">
+                <button id="downloadQrBtn" class="btn small">
+                    <i class="fas fa-download"></i> Download QR
+                </button>
+                <button class="btn ghost" onclick="closeModal('qrModal')">Close</button>
             </div>
         </div>
     </div>

@@ -224,6 +224,11 @@ function bindUI() {
     $('#findBtn').addEventListener('click', openFindDialog);
     $('#undoBtn').addEventListener('click', () => doCmd('undo'));
     $('#redoBtn').addEventListener('click', () => doCmd('redo'));
+    
+    // Download dropdown
+    $('#downloadBtn').addEventListener('click', toggleDownloadMenu);
+    $('#downloadTxtBtn').addEventListener('click', downloadAsTxt);
+    $('#downloadPdfBtn').addEventListener('click', downloadAsPdf);
     $('#printBtn').addEventListener('click', printDocument);
     
     // Note modal events
@@ -236,6 +241,7 @@ function bindUI() {
         const url = $('#noteUrl').value;
         copyToClipboard(url).then(ok => toast(ok ? 'Link copied!' : 'Copy failed', ok ? 'success' : 'error'));
     });
+    $('#qrNoteBtn').addEventListener('click', generateQrCode);
     
     // Import/Export buttons
     $('#importBtn').addEventListener('click', importDocument);
@@ -278,6 +284,76 @@ function bindUI() {
     // Viewer events
     $('#viewerCloseBtn').addEventListener('click', () => $('#viewerOverlay').classList.add('hidden'));
     $('#viewerSaveBtn').addEventListener('click', saveViewerContent);
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.dropdown')) {
+            $('#downloadMenu').classList.add('hidden');
+        }
+    });
+}
+
+/* --------------------------
+Toggle Download Menu
+-------------------------- */
+function toggleDownloadMenu() {
+    const menu = $('#downloadMenu');
+    menu.classList.toggle('hidden');
+}
+
+/* --------------------------
+Download as TXT
+-------------------------- */
+function downloadAsTxt() {
+    if (!currentId) return;
+    const content = editor.innerText;
+    const title = $('#titleInput').value || 'document';
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('Document downloaded as TXT', 'success');
+}
+
+/* --------------------------
+Download as PDF
+-------------------------- */
+function downloadAsPdf() {
+    if (!currentId) return;
+    
+    // Check if jsPDF is available
+    if (typeof window.jspdf === 'undefined') {
+        toast('PDF library not loaded. Please try again.', 'error');
+        return;
+    }
+    
+    const { jsPDF } = window.jspdf;
+    const title = $('#titleInput').value || 'Document';
+    const content = editor.innerText;
+    
+    // Create PDF
+    const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+    });
+    
+    // Set font and add content
+    pdf.setFont('helvetica');
+    pdf.setFontSize(12);
+    pdf.text(title, 15, 15);
+    pdf.setFontSize(10);
+    pdf.text(content, 15, 25, {
+        maxWidth: 180,
+        lineHeightFactor: 1.5
+    });
+    
+    // Save PDF
+    pdf.save(`${title}.pdf`);
+    toast('Document downloaded as PDF', 'success');
 }
 
 /* --------------------------
@@ -409,13 +485,46 @@ function insertImage(e) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
-        const imgHtml = `<img src="${reader.result}" style="max-width:100%;height:auto;border-radius:8px;margin:10px 0;" />`;
-        document.execCommand('insertHTML', false, imgHtml);
-        toast('Image inserted', 'success');
+    reader.onload = function(event) {
+        const img = new Image();
+        img.src = event.target.result;
+        img.style.maxWidth = '100%';
+        img.style.height = 'auto';
+        img.style.borderRadius = '8px';
+        img.style.margin = '10px 0';
+        
+        // Wait for image to load before inserting
+        img.onload = function() {
+            // Create a range and insert the image
+            const range = document.createRange();
+            const sel = window.getSelection();
+            
+            if (sel.rangeCount > 0) {
+                range.setStart(sel.anchorNode, sel.anchorOffset);
+                range.collapse(true);
+            } else {
+                range.selectNodeContents(editor);
+                range.collapse(false);
+            }
+            
+            // Insert the image
+            range.insertNode(img);
+            
+            // Move cursor after the image
+            range.setStartAfter(img);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+            
+            toast('Image inserted', 'success');
+        };
+        
+        img.onerror = function() {
+            toast('Error loading image', 'error');
+        };
     };
     reader.readAsDataURL(file);
-    e.target.value = '';
+    e.target.value = ''; // Reset input
 }
 
 /* --------------------------
@@ -585,7 +694,7 @@ function printDocument() {
 }
 
 /* --------------------------
-Secure Note Creation
+Secure Note Creation (Original version preserved)
 -------------------------- */
 async function generateSecureNote() {
     const pwd = $('#notePassword').value;
@@ -689,6 +798,55 @@ function startCountdown(expiresAt) {
     });
     modalObserver.observe($('#noteModal'), { attributes: true, attributeFilter: ['class'] });
 }
+
+/* --------------------------
+QR Code Generation
+-------------------------- */
+function generateQrCode() {
+    const url = $('#noteUrl').value;
+    if (!url) {
+        toast('No URL to generate QR code', 'error');
+        return;
+    }
+    
+    // Clear previous QR code
+    $('#qrCode').innerHTML = '';
+    
+    // Generate QR code
+    QRCode.toCanvas(document.getElementById('qrCode'), url, {
+        width: 256,
+        margin: 2,
+        color: {
+            dark: '#000000',
+            light: '#ffffff'
+        }
+    }, function (error) {
+        if (error) {
+            console.error('QR Code generation error:', error);
+            toast('Error generating QR code', 'error');
+            return;
+        }
+        
+        // Show QR modal
+        openModal('qrModal');
+    });
+}
+
+// Download QR code
+$('#downloadQrBtn').addEventListener('click', function() {
+    const canvas = document.querySelector('#qrCode canvas');
+    if (!canvas) {
+        toast('No QR code to download', 'error');
+        return;
+    }
+    
+    const url = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'anondocs-qr-code.png';
+    a.click();
+    toast('QR code downloaded', 'success');
+});
 
 /* --------------------------
 Handle incoming secure note

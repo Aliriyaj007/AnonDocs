@@ -314,6 +314,44 @@ section:nth-child(even) {
     flex: 1;
 }
 
+/* Dropdown Menu */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+.dropdown-content {
+    position: absolute;
+    right: 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    min-width: 180px;
+    padding: 8px 0;
+    backdrop-filter: blur(10px);
+}
+.dropdown-content.hidden {
+    display: none;
+}
+.dropdown-item {
+    width: 100%;
+    text-align: left;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.dropdown-item:hover {
+    background: var(--glass-bg);
+    color: var(--gold);
+}
+
 /* ===== LAYOUT ===== */
 .layout {
     display: flex;
@@ -547,6 +585,12 @@ section:nth-child(even) {
     gap: 12px;
     justify-content: flex-end;
     margin-top: 24px;
+}
+
+/* QR Code Container */
+.qr-container {
+    text-align: center;
+    margin: 20px 0;
 }
 
 /* ===== VIEWER ===== */
