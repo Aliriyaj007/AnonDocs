@@ -69,7 +69,7 @@ AnonDocs is a Progressive Web App (PWA). You can install it on your device for a
 ## 📜 License
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
-
+Contact us: https://forms.gle/cF87VmxNij8hWb9a7
 ---
 
 **Enjoy your private, secure, and beautiful document sharing experience with AnonDocs.**
