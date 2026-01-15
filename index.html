@@ -1,0 +1,2830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnonDocs Secure | Encrypted Document Editor</title>
+    <meta name="description" content="Create, edit, and share encrypted, self-destructing documents with 8 premium themes. All encryption happens in your browser.">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <style>
+        /* ===== CSS RESET & BASE ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            /* Default Theme - Midnight */
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #141414;
+            --bg-surface: #1e1e1e;
+            --bg-card: #242424;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #666666;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #10b981;
+            --border-color: #333333;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.5);
+            --transition: all 0.2s ease;
+            --glass-bg: rgba(255,255,255,0.05);
+            --glass-border: rgba(255,255,255,0.1);
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+            --font-mono: 'SF Mono', Monaco, 'Cascadia Mono', monospace;
+        }
+        
+        html { font-size: 16px; }
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* ===== THEME DEFINITIONS ===== */
+        .theme-midnight { /* Already default */ }
+        
+        .theme-aurora {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-surface: #334155;
+            --bg-card: #475569;
+            --accent-primary: #0ea5e9;
+            --accent-secondary: #8b5cf6;
+        }
+        
+        .theme-emerald {
+            --bg-primary: #064e3b;
+            --bg-secondary: #065f46;
+            --bg-surface: #047857;
+            --bg-card: #059669;
+            --accent-primary: #10b981;
+            --accent-secondary: #34d399;
+        }
+        
+        .theme-crimson {
+            --bg-primary: #450a0a;
+            --bg-secondary: #7f1d1d;
+            --bg-surface: #991b1b;
+            --bg-card: #b91c1c;
+            --accent-primary: #ef4444;
+            --accent-secondary: #f87171;
+        }
+        
+        .theme-solar {
+            --bg-primary: #78350f;
+            --bg-secondary: #92400e;
+            --bg-surface: #b45309;
+            --bg-card: #d97706;
+            --text-primary: #fef3c7;
+            --text-secondary: #fbbf24;
+            --accent-primary: #f59e0b;
+            --accent-secondary: #fbbf24;
+        }
+        
+        .theme-ocean {
+            --bg-primary: #1e3a8a;
+            --bg-secondary: #1e40af;
+            --bg-surface: #1d4ed8;
+            --bg-card: #3b82f6;
+            --text-primary: #dbeafe;
+            --accent-primary: #60a5fa;
+            --accent-secondary: #93c5fd;
+        }
+        
+        .theme-void {
+            --bg-primary: #000000;
+            --bg-secondary: #0a0a0a;
+            --bg-surface: #111111;
+            --bg-card: #1a1a1a;
+            --accent-primary: #a855f7;
+            --accent-secondary: #d946ef;
+            --border-color: #222222;
+        }
+        
+        .theme-cream {
+            --bg-primary: #fefce8;
+            --bg-secondary: #fef9c3;
+            --bg-surface: #fef08a;
+            --bg-card: #fde047;
+            --text-primary: #1c1917;
+            --text-secondary: #44403c;
+            --text-muted: #78716c;
+            --accent-primary: #ea580c;
+            --accent-secondary: #f97316;
+            --border-color: #e7e5e4;
+            --glass-bg: rgba(0,0,0,0.05);
+            --glass-border: rgba(0,0,0,0.1);
+        }
+        
+        /* ===== LAYOUT UTILITIES ===== */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-1 { gap: 0.25rem; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-3 { gap: 0.75rem; }
+        .gap-4 { gap: 1rem; }
+        .gap-6 { gap: 1.5rem; }
+        .gap-8 { gap: 2rem; }
+        
+        .hidden { display: none !important; }
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            border: 0;
+        }
+        
+        /* ===== TYPOGRAPHY ===== */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 0.5em;
+        }
+        
+        h1 { font-size: 2.5rem; }
+        h2 { font-size: 2rem; }
+        h3 { font-size: 1.5rem; }
+        h4 { font-size: 1.25rem; }
+        
+        .text-sm { font-size: 0.875rem; }
+        .text-base { font-size: 1rem; }
+        .text-lg { font-size: 1.125rem; }
+        .text-xl { font-size: 1.25rem; }
+        
+        .text-muted { color: var(--text-muted); }
+        .text-accent { color: var(--accent-primary); }
+        .text-success { color: var(--success); }
+        .text-error { color: var(--error); }
+        
+        /* ===== COMPONENTS ===== */
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border-radius: var(--radius-md);
+            border: 1px solid transparent;
+            font-family: inherit;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            user-select: none;
+            white-space: nowrap;
+        }
+        
+        .btn-primary {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+        
+        .btn-primary:hover {
+            background: color-mix(in srgb, var(--accent-primary) 80%, black);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+        
+        .btn-secondary:hover {
+            background: color-mix(in srgb, var(--bg-surface) 90%, white);
+            border-color: var(--accent-primary);
+        }
+        
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
+            border-color: transparent;
+        }
+        
+        .btn-ghost:hover {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+        }
+        
+        .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.875rem; }
+        .btn-lg { padding: 0.875rem 1.75rem; font-size: 1rem; }
+        .btn-block { width: 100%; }
+        
+        /* Inputs */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+        }
+        
+        .input-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .input {
+            padding: 0.625rem 0.875rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9375rem;
+            transition: var(--transition);
+        }
+        
+        .input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
+        }
+        
+        .input::placeholder {
+            color: var(--text-muted);
+        }
+        
+        .checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .checkbox-input {
+            width: 1.125rem;
+            height: 1.125rem;
+            accent-color: var(--accent-primary);
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+        
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+        
+        .card-header {
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.25rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .tab:hover {
+            color: var(--text-primary);
+        }
+        
+        .tab.active {
+            color: var(--accent-primary);
+            border-bottom-color: var(--accent-primary);
+        }
+        
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.625rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background: var(--bg-surface);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        
+        .badge-success {
+            background: color-mix(in srgb, var(--success) 10%, transparent);
+            color: var(--success);
+            border-color: color-mix(in srgb, var(--success) 30%, transparent);
+        }
+        
+        .badge-warning {
+            background: color-mix(in srgb, var(--warning) 10%, transparent);
+            color: var(--warning);
+            border-color: color-mix(in srgb, var(--warning) 30%, transparent);
+        }
+        
+        /* Modals & Overlays */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            z-index: 1000;
+        }
+        
+        .modal {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem 1.5rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+        
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-width: 350px;
+        }
+        
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-primary);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: var(--shadow-lg);
+            animation: slideInRight 0.3s ease;
+        }
+        
+        .toast-success { border-left-color: var(--success); }
+        .toast-error { border-left-color: var(--error); }
+        .toast-warning { border-left-color: var(--warning); }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* Toolbar */
+        .toolbar {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 0.75rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding-right: 0.75rem;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .toolbar-group:last-child { border-right: none; }
+        
+        /* Editor */
+        .editor-container {
+            background: white;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            min-height: 500px;
+            overflow: hidden;
+        }
+        
+        #editor {
+            min-height: 500px;
+            padding: 2rem;
+            outline: none;
+            color: #1a1a1a;
+            line-height: 1.6;
+            font-family: var(--font-sans);
+        }
+        
+        #editor:empty:before {
+            content: attr(data-placeholder);
+            color: #9ca3af;
+            pointer-events: none;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        
+        .sidebar-header {
+            margin-bottom: 1.5rem;
+        }
+        
+        .document-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .document-item {
+            padding: 0.875rem;
+            border-radius: var(--radius-md);
+            background: var(--bg-surface);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .document-item:hover {
+            border-color: var(--accent-primary);
+            background: color-mix(in srgb, var(--accent-primary) 5%, var(--bg-surface));
+        }
+        
+        .document-item.active {
+            border-color: var(--accent-primary);
+            background: color-mix(in srgb, var(--accent-primary) 10%, var(--bg-surface));
+        }
+        
+        /* Theme Switcher */
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+        
+        .theme-option {
+            aspect-ratio: 1;
+            border-radius: var(--radius-md);
+            border: 2px solid transparent;
+            cursor: pointer;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .theme-option:hover {
+            border-color: var(--accent-primary);
+        }
+        
+        .theme-option.active {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+        }
+        
+        .theme-preview {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-rows: repeat(4, 1fr);
+        }
+        
+        .theme-preview > div:nth-child(1) { background: var(--bg-primary); }
+        .theme-preview > div:nth-child(2) { background: var(--bg-secondary); }
+        .theme-preview > div:nth-child(3) { background: var(--bg-surface); }
+        .theme-preview > div:nth-child(4) { background: var(--accent-primary); }
+        
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1.5rem;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            font-size: 0.875rem;
+        }
+        
+        /* Settings Panel */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .layout {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                max-height: 300px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            html { font-size: 14px; }
+            
+            .toolbar {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+            }
+            
+            .theme-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .modal {
+                max-width: 100%;
+                margin: 1rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .tabs {
+                overflow-x: auto;
+            }
+            
+            .tab {
+                white-space: nowrap;
+                padding: 0.75rem 1rem;
+            }
+            
+            .btn-group {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body class="theme-midnight">
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+    
+    <!-- Main App Container -->
+    <div class="container">
+        <!-- Header -->
+        <header class="flex items-center justify-between py-4 mb-6">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold">AnonDocs Secure</h1>
+                <span class="badge">v3.0</span>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <button id="themeToggle" class="btn btn-secondary">
+                    <i class="fas fa-palette"></i>
+                    <span class="hidden md:inline">Theme</span>
+                </button>
+                
+                <button id="settingsToggle" class="btn btn-secondary">
+                    <i class="fas fa-cog"></i>
+                    <span class="hidden md:inline">Settings</span>
+                </button>
+                
+                <button id="guideToggle" class="btn btn-secondary">
+                    <i class="fas fa-question-circle"></i>
+                    <span class="hidden md:inline">Guide</span>
+                </button>
+            </div>
+        </header>
+        
+        <!-- Main Layout -->
+        <div class="layout flex gap-6">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h3 class="text-lg font-semibold mb-3">Documents</h3>
+                    <div class="flex gap-2">
+                        <button id="newDocBtn" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> New
+                        </button>
+                        <button id="importDocBtn" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-file-import"></i>
+                        </button>
+                        <button id="exportDocBtn" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-file-export"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="documentList" class="document-list">
+                    <!-- Documents will be loaded here -->
+                </div>
+            </aside>
+            
+            <!-- Main Content -->
+            <main class="flex-1">
+                <!-- Document Header -->
+                <div class="flex items-center justify-between mb-4">
+                    <input 
+                        id="docTitle" 
+                        type="text" 
+                        class="input flex-1 text-xl font-bold bg-transparent border-none focus:ring-0"
+                        placeholder="Untitled Document"
+                    >
+                    
+                    <div class="flex gap-2">
+                        <button id="saveDocBtn" class="btn btn-secondary">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                        <button id="shareDocBtn" class="btn btn-primary">
+                            <i class="fas fa-shield-alt"></i> Secure Share
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Toolbar -->
+                <div class="toolbar">
+                    <div class="toolbar-group">
+                        <select id="fontFamily" class="input btn-sm">
+                            <option value="Inter, sans-serif">Inter</option>
+                            <option value="Arial, sans-serif">Arial</option>
+                            <option value="Georgia, serif">Georgia</option>
+                            <option value="'Courier New', monospace">Monospace</option>
+                        </select>
+                        
+                        <select id="fontSize" class="input btn-sm">
+                            <option value="1">Small</option>
+                            <option value="2" selected>Normal</option>
+                            <option value="3">Large</option>
+                            <option value="4">X-Large</option>
+                        </select>
+                    </div>
+                    
+                    <div class="toolbar-group">
+                        <button data-command="bold" class="btn btn-ghost btn-sm">
+                            <i class="fas fa-bold"></i>
+                        </button>
+                        <button data-command="italic" class="btn btn-ghost btn-sm">
+                            <i class="fas fa-italic"></i>
+                        </button>
+                        <button data-command="underline" class="btn btn-ghost btn-sm">
+                            <i class="fas fa-underline"></i>
+                        </button>
+                        <button data-command="strikeThrough" class="btn btn-ghost btn-sm">
+                            <i class="fas fa-strikethrough"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="toolbar-group">
+                        <input type="color" id="textColor" class="w-8 h-8 cursor-pointer">
+                        <input type="color" id="highlightColor" class="w-8 h-8 cursor-pointer" value="#ffff00">
+                    </div>
+                    
+                    <div class="toolbar-group">
+                        <button data-command="insertUnorderedList" class="btn btn-ghost btn-sm">
+                            <i class="fas fa-list-ul"></i>
+                        </button>
+                        <button data-command="insertOrderedList" class="btn btn-ghost btn-sm">
+                            <i class="fas fa-list-ol"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="toolbar-group">
+                        <button data-command="indent" class="btn btn-ghost btn-sm">
+                            <i class="fas fa-indent"></i>
+                        </button>
+                        <button data-command="outdent" class="btn btn-ghost btn-sm">
+                            <i class="fas fa-outdent"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="flex-1"></div>
+                    
+                    <div class="toolbar-group">
+                        <button id="findBtn" class="btn btn-ghost btn-sm">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <button id="printBtn" class="btn btn-ghost btn-sm">
+                            <i class="fas fa-print"></i>
+                        </button>
+                        <button id="downloadBtn" class="btn btn-ghost btn-sm">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Editor -->
+                <div class="editor-container">
+                    <div 
+                        id="editor" 
+                        contenteditable="true"
+                        data-placeholder="Start typing your document here..."
+                        class="min-h-[500px] p-8"
+                    ></div>
+                </div>
+                
+                <!-- Stats Bar -->
+                <div class="stats-bar">
+                    <div id="wordCount" class="text-muted">0 words · 0 characters</div>
+                    <div class="flex items-center gap-4">
+                        <span id="saveStatus" class="text-success text-sm">
+                            <i class="fas fa-check-circle"></i> Saved
+                        </span>
+                        <button id="encryptToggle" class="btn btn-ghost btn-sm">
+                            <i class="fas fa-lock"></i> Encrypted
+                        </button>
+                    </div>
+                </div>
+            </main>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="mt-8 pt-6 border-t border-border-color text-center text-muted text-sm">
+            <p>
+                Made with ❤️ by <a href="https://github.com/Aliriyaj007" target="_blank" class="text-accent hover:underline">Aliriyaj007</a> · 
+                All encryption happens in your browser · No data stored on servers
+            </p>
+        </footer>
+    </div>
+    
+    <!-- Modals -->
+    
+    <!-- Theme Modal -->
+    <div id="themeModal" class="modal-overlay hidden">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="text-lg font-semibold">Choose Theme</h3>
+                <button class="btn btn-ghost btn-sm close-modal" data-modal="themeModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="theme-grid">
+                    <div class="theme-option active" data-theme="midnight">
+                        <div class="theme-preview">
+                            <div></div><div></div><div></div><div></div>
+                        </div>
+                        <div class="text-center mt-2 text-sm">Midnight</div>
+                    </div>
+                    <div class="theme-option" data-theme="aurora">
+                        <div class="theme-preview">
+                            <div></div><div></div><div></div><div></div>
+                        </div>
+                        <div class="text-center mt-2 text-sm">Aurora</div>
+                    </div>
+                    <div class="theme-option" data-theme="emerald">
+                        <div class="theme-preview">
+                            <div></div><div></div><div></div><div></div>
+                        </div>
+                        <div class="text-center mt-2 text-sm">Emerald</div>
+                    </div>
+                    <div class="theme-option" data-theme="crimson">
+                        <div class="theme-preview">
+                            <div></div><div></div><div></div><div></div>
+                        </div>
+                        <div class="text-center mt-2 text-sm">Crimson</div>
+                    </div>
+                    <div class="theme-option" data-theme="solar">
+                        <div class="theme-preview">
+                            <div></div><div></div><div></div><div></div>
+                        </div>
+                        <div class="text-center mt-2 text-sm">Solar</div>
+                    </div>
+                    <div class="theme-option" data-theme="ocean">
+                        <div class="theme-preview">
+                            <div></div><div></div><div></div><div></div>
+                        </div>
+                        <div class="text-center mt-2 text-sm">Ocean</div>
+                    </div>
+                    <div class="theme-option" data-theme="void">
+                        <div class="theme-preview">
+                            <div></div><div></div><div></div><div></div>
+                        </div>
+                        <div class="text-center mt-2 text-sm">Void</div>
+                    </div>
+                    <div class="theme-option" data-theme="cream">
+                        <div class="theme-preview">
+                            <div></div><div></div><div></div><div></div>
+                        </div>
+                        <div class="text-center mt-2 text-sm">Cream</div>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <h4 class="font-semibold mb-3">Customize</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label class="input-label">Primary Color</label>
+                            <input type="color" id="customPrimary" class="input" value="#3b82f6">
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label">Background Color</label>
+                            <input type="color" id="customBg" class="input" value="#0a0a0a">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary close-modal" data-modal="themeModal">Cancel</button>
+                <button id="applyCustomTheme" class="btn btn-primary">Apply Custom</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal-overlay hidden">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 class="text-lg font-semibold">Settings</h3>
+                <button class="btn btn-ghost btn-sm close-modal" data-modal="settingsModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="tabs mb-6">
+                    <button class="tab active" data-tab="general">General</button>
+                    <button class="tab" data-tab="editor">Editor</button>
+                    <button class="tab" data-tab="security">Security</button>
+                    <button class="tab" data-tab="backup">Backup</button>
+                </div>
+                
+                <div id="generalTab" class="tab-content">
+                    <div class="settings-grid">
+                        <div class="setting-item">
+                            <label class="input-label">Auto-save Interval</label>
+                            <select id="autoSaveInterval" class="input">
+                                <option value="0">Disabled</option>
+                                <option value="5">5 seconds</option>
+                                <option value="15" selected>15 seconds</option>
+                                <option value="30">30 seconds</option>
+                                <option value="60">1 minute</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="input-label">Default Font</label>
+                            <select id="defaultFont" class="input">
+                                <option value="Inter, sans-serif">Inter</option>
+                                <option value="Arial, sans-serif">Arial</option>
+                                <option value="Georgia, serif">Georgia</option>
+                                <option value="'Courier New', monospace">Monospace</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="input-label">Default Expiry Time</label>
+                            <select id="defaultExpiry" class="input">
+                                <option value="0">Never</option>
+                                <option value="1">1 hour</option>
+                                <option value="24">24 hours</option>
+                                <option value="168" selected>7 days</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="checkbox">
+                                <input type="checkbox" id="enableSpellcheck" checked>
+                                <span>Enable spell check</span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="checkbox">
+                                <input type="checkbox" id="enableWordCount" checked>
+                                <span>Show word count</span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="checkbox">
+                                <input type="checkbox" id="enableAnimations" checked>
+                                <span>Enable animations</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="editorTab" class="tab-content hidden">
+                    <div class="settings-grid">
+                        <div class="setting-item">
+                            <label class="input-label">Default Font Size</label>
+                            <select id="defaultFontSize" class="input">
+                                <option value="14px">Small (14px)</option>
+                                <option value="16px" selected>Normal (16px)</option>
+                                <option value="18px">Large (18px)</option>
+                                <option value="20px">X-Large (20px)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="input-label">Line Height</label>
+                            <select id="lineHeight" class="input">
+                                <option value="1.4">Tight</option>
+                                <option value="1.6" selected>Normal</option>
+                                <option value="1.8">Relaxed</option>
+                                <option value="2.0">Double</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="checkbox">
+                                <input type="checkbox" id="autoIndent" checked>
+                                <span>Auto-indent paragraphs</span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="checkbox">
+                                <input type="checkbox" id="showFormatting" checked>
+                                <span>Show formatting marks</span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="checkbox">
+                                <input type="checkbox" id="enableImagePaste" checked>
+                                <span>Allow image pasting</span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="checkbox">
+                                <input type="checkbox" id="enableMarkdown">
+                                <span>Enable Markdown shortcuts</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="securityTab" class="tab-content hidden">
+                    <div class="settings-grid">
+                        <div class="setting-item">
+                            <label class="input-label">Encryption Strength</label>
+                            <select id="encryptionStrength" class="input">
+                                <option value="128">128-bit (Fast)</option>
+                                <option value="256" selected>256-bit (Secure)</option>
+                                <option value="512">512-bit (Maximum)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="checkbox">
+                                <input type="checkbox" id="autoLock" checked>
+                                <span>Auto-lock after 5 minutes</span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="checkbox">
+                                <input type="checkbox" id="clearClipboard">
+                                <span>Clear clipboard after copy</span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="checkbox">
+                                <input type="checkbox" id="requirePassword">
+                                <span>Require password for sharing</span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="checkbox">
+                                <input type="checkbox" id="enable2FA">
+                                <span>Enable two-factor authentication</span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <button id="clearAllData" class="btn btn-error btn-block">
+                                <i class="fas fa-trash"></i> Clear All Local Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="backupTab" class="tab-content hidden">
+                    <div class="settings-grid">
+                        <div class="setting-item">
+                            <label class="input-label">Auto-backup Interval</label>
+                            <select id="backupInterval" class="input">
+                                <option value="0">Disabled</option>
+                                <option value="1">Every hour</option>
+                                <option value="24" selected>Daily</option>
+                                <option value="168">Weekly</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="checkbox">
+                                <input type="checkbox" id="backupEncrypted" checked>
+                                <span>Encrypt backups</span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <button id="exportAllBtn" class="btn btn-primary btn-block">
+                                <i class="fas fa-download"></i> Export All Data
+                            </button>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <button id="importBackupBtn" class="btn btn-secondary btn-block">
+                                <i class="fas fa-upload"></i> Import Backup
+                            </button>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <div class="input-group">
+                                <label class="input-label">Backup Encryption Key</label>
+                                <input type="password" id="backupKey" class="input" placeholder="Leave blank for no encryption">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary close-modal" data-modal="settingsModal">Cancel</button>
+                <button id="saveSettingsBtn" class="btn btn-primary">Save Settings</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Share Modal -->
+    <div id="shareModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="text-lg font-semibold">Create Secure Share</h3>
+                <button class="btn btn-ghost btn-sm close-modal" data-modal="shareModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="input-group mb-4">
+                    <label class="input-label">Document Title</label>
+                    <input type="text" id="shareTitle" class="input" placeholder="Enter title for shared document">
+                </div>
+                
+                <div class="input-group mb-4">
+                    <label class="input-label">Password (required)</label>
+                    <input type="password" id="sharePassword" class="input" placeholder="Enter password">
+                    <div class="flex items-center gap-2 mt-2">
+                        <div id="passwordStrength" class="h-2 flex-1 bg-border-color rounded-full overflow-hidden">
+                            <div id="passwordStrengthBar" class="h-full bg-success transition-all"></div>
+                        </div>
+                        <span id="passwordStrengthText" class="text-sm text-muted">Weak</span>
+                    </div>
+                </div>
+                
+                <div class="input-group mb-4">
+                    <label class="input-label">Confirm Password</label>
+                    <input type="password" id="sharePasswordConfirm" class="input" placeholder="Re-enter password">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="input-group">
+                        <label class="input-label">Expires After</label>
+                        <select id="shareExpiry" class="input">
+                            <option value="0">Never</option>
+                            <option value="1">1 hour</option>
+                            <option value="24">24 hours</option>
+                            <option value="168" selected>7 days</option>
+                            <option value="720">30 days</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="input-label">Max Views</label>
+                        <select id="maxViews" class="input">
+                            <option value="0">Unlimited</option>
+                            <option value="1" selected>1 view</option>
+                            <option value="5">5 views</option>
+                            <option value="10">10 views</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="space-y-2 mb-6">
+                    <label class="checkbox">
+                        <input type="checkbox" id="selfDestruct" checked>
+                        <span>Self-destruct after viewing</span>
+                    </label>
+                    
+                    <label class="checkbox">
+                        <input type="checkbox" id="notifyOnOpen">
+                        <span>Notify me when opened</span>
+                    </label>
+                    
+                    <label class="checkbox">
+                        <input type="checkbox" id="allowDownload">
+                        <span>Allow download</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary close-modal" data-modal="shareModal">Cancel</button>
+                <button id="generateShareLink" class="btn btn-primary">
+                    <i class="fas fa-link"></i> Generate Secure Link
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Share Result Modal -->
+    <div id="shareResultModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="text-lg font-semibold">Secure Link Created</h3>
+                <button class="btn btn-ghost btn-sm close-modal" data-modal="shareResultModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="input-group mb-4">
+                    <label class="input-label">Secure Link</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="shareLink" class="input flex-1" readonly>
+                        <button id="copyShareLink" class="btn btn-secondary">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <div id="qrCode" class="flex justify-center mb-4"></div>
+                    <p class="text-center text-muted text-sm">Scan QR code to access document</p>
+                </div>
+                
+                <div class="bg-bg-surface rounded-lg p-4 mb-4">
+                    <h4 class="font-semibold mb-2">Access Details</h4>
+                    <div class="space-y-1 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-muted">Expires:</span>
+                            <span id="expiryInfo">Never</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted">Max Views:</span>
+                            <span id="viewsInfo">1</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted">Self-destruct:</span>
+                            <span id="destructInfo">Yes</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary close-modal" data-modal="shareResultModal">Close</button>
+                <button id="downloadQRBtn" class="btn btn-primary">
+                    <i class="fas fa-download"></i> Download QR
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- User Guide Modal -->
+    <div id="guideModal" class="modal-overlay hidden">
+        <div class="modal" style="max-width: 800px; max-height: 90vh;">
+            <div class="modal-header">
+                <h3 class="text-lg font-semibold">AnonDocs User Guide</h3>
+                <button class="btn btn-ghost btn-sm close-modal" data-modal="guideModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body" style="overflow-y: auto;">
+                <div class="space-y-6">
+                    <section>
+                        <h4 class="text-lg font-semibold mb-2">📝 What is AnonDocs?</h4>
+                        <p class="text-muted">
+                            AnonDocs is a secure, privacy-focused document editor that encrypts everything in your browser. 
+                            Create, edit, and share self-destructing documents with end-to-end encryption. No data is stored on servers.
+                        </p>
+                    </section>
+                    
+                    <section>
+                        <h4 class="text-lg font-semibold mb-2">✨ Key Features</h4>
+                        <ul class="space-y-2 text-muted ml-4 list-disc">
+                            <li><strong>8 Premium Themes</strong> - Choose from Midnight, Aurora, Emerald, Crimson, Solar, Ocean, Void, or Cream</li>
+                            <li><strong>End-to-End Encryption</strong> - All encryption happens in your browser using Web Crypto API</li>
+                            <li><strong>Self-Destructing Documents</strong> - Set expiration times or one-time view links</li>
+                            <li><strong>Rich Text Editor</strong> - Format text, add images, create lists, and more</li>
+                            <li><strong>Local Storage</strong> - All documents are saved in your browser</li>
+                            <li><strong>Export Options</strong> - Download as TXT, PDF, or HTML</li>
+                            <li><strong>QR Code Generation</strong> - Share documents via QR codes</li>
+                            <li><strong>Password Protection</strong> - Secure shared documents with passwords</li>
+                        </ul>
+                    </section>
+                    
+                    <section>
+                        <h4 class="text-lg font-semibold mb-2">🎨 Customization</h4>
+                        <p class="text-muted mb-2">You can customize:</p>
+                        <ul class="space-y-1 text-muted ml-4 list-disc">
+                            <li><strong>Themes</strong> - Click the palette icon to choose from 8 themes</li>
+                            <li><strong>Editor Settings</strong> - Font, size, line height, and more</li>
+                            <li><strong>Security Settings</strong> - Encryption strength, auto-lock, etc.</li>
+                            <li><strong>Auto-save</strong> - Set your preferred save interval</li>
+                        </ul>
+                    </section>
+                    
+                    <section>
+                        <h4 class="text-lg font-semibold mb-2">📤 Import & Export</h4>
+                        <p class="text-muted mb-2">Backup and restore your data:</p>
+                        <ul class="space-y-1 text-muted ml-4 list-disc">
+                            <li><strong>Export All Data</strong> - Settings → Backup → Export All Data</li>
+                            <li><strong>Import Backup</strong> - Settings → Backup → Import Backup</li>
+                            <li><strong>Export Individual Document</strong> - Use the download button in toolbar</li>
+                            <li><strong>Export as PDF</strong> - Requires jspdf library (automatically loaded)</li>
+                        </ul>
+                    </section>
+                    
+                    <section>
+                        <h4 class="text-lg font-semibold mb-2">🔒 Security Features</h4>
+                        <ul class="space-y-2 text-muted ml-4 list-disc">
+                            <li><strong>Client-Side Encryption</strong> - Your data never leaves your device unencrypted</li>
+                            <li><strong>Password Protection</strong> - All shared documents require passwords</li>
+                            <li><strong>Self-Destruct</strong> - Documents can be set to delete after viewing</li>
+                            <li><strong>Expiration</strong> - Set time limits on shared documents</li>
+                            <li><strong>View Limits</strong> - Restrict how many times a document can be viewed</li>
+                            <li><strong>No Tracking</strong> - We don't collect any analytics or personal data</li>
+                        </ul>
+                    </section>
+                    
+                    <section>
+                        <h4 class="text-lg font-semibold mb-2">⌨️ Keyboard Shortcuts</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div class="bg-bg-surface rounded p-3">
+                                <div class="font-medium">Ctrl/Cmd + S</div>
+                                <div class="text-muted">Save document</div>
+                            </div>
+                            <div class="bg-bg-surface rounded p-3">
+                                <div class="font-medium">Ctrl/Cmd + B</div>
+                                <div class="text-muted">Bold text</div>
+                            </div>
+                            <div class="bg-bg-surface rounded p-3">
+                                <div class="font-medium">Ctrl/Cmd + I</div>
+                                <div class="text-muted">Italic text</div>
+                            </div>
+                            <div class="bg-bg-surface rounded p-3">
+                                <div class="font-medium">Ctrl/Cmd + U</div>
+                                <div class="text-muted">Underline text</div>
+                            </div>
+                            <div class="bg-bg-surface rounded p-3">
+                                <div class="font-medium">Ctrl/Cmd + N</div>
+                                <div class="text-muted">New document</div>
+                            </div>
+                            <div class="bg-bg-surface rounded p-3">
+                                <div class="font-medium">Ctrl/Cmd + P</div>
+                                <div class="text-muted">Print document</div>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <section>
+                        <h4 class="text-lg font-semibold mb-2">⚠️ Important Notes</h4>
+                        <ul class="space-y-2 text-muted ml-4 list-disc">
+                            <li>Documents are stored in your browser's local storage</li>
+                            <li>Clearing browser data will delete your documents</li>
+                            <li>Always export backups of important documents</li>
+                            <li>Remember your passwords - there's no recovery option</li>
+                            <li>For maximum security, use strong, unique passwords</li>
+                            <li>This app works entirely offline after first load</li>
+                        </ul>
+                    </section>
+                    
+                    <section class="pt-4 border-t border-border-color">
+                        <h4 class="text-lg font-semibold mb-2">👨‍💻 Credits</h4>
+                        <p class="text-muted">
+                            Made with ❤️ by <a href="https://github.com/Aliriyaj007" target="_blank" class="text-accent hover:underline">Aliriyaj007</a>
+                        </p>
+                        <p class="text-sm text-muted mt-2">
+                            This is a single-file web application built with vanilla HTML, CSS, and JavaScript. 
+                            No frameworks, no databases, no AI. All encryption uses the Web Crypto API.
+                        </p>
+                    </section>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-primary close-modal" data-modal="guideModal">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // ANONDOCS - SINGLE FILE APPLICATION
+        // ============================================
+        // Architecture: Modular IIFE pattern to avoid global pollution
+        // All components are encapsulated in the AnonDocs namespace
+        
+        (function() {
+            'use strict';
+            
+            // ============================================
+            // MODULE: Application State & Constants
+            // ============================================
+            const AppState = (function() {
+                const STORAGE_KEYS = {
+                    DOCUMENTS: 'anondocs_documents_v3',
+                    SETTINGS: 'anondocs_settings_v3',
+                    THEME: 'anondocs_theme_v3',
+                    SHARED_LINKS: 'anondocs_shared_links_v3'
+                };
+                
+                let currentDocumentId = null;
+                let documents = new Map();
+                let settings = {};
+                let sharedLinks = [];
+                
+                // Initialize from localStorage
+                function init() {
+                    // Load documents
+                    const savedDocs = localStorage.getItem(STORAGE_KEYS.DOCUMENTS);
+                    if (savedDocs) {
+                        try {
+                            const parsed = JSON.parse(savedDocs);
+                            documents = new Map(Object.entries(parsed));
+                        } catch (e) {
+                            console.warn('Failed to parse saved documents:', e);
+                            documents = new Map();
+                        }
+                    }
+                    
+                    // Load settings
+                    const savedSettings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+                    if (savedSettings) {
+                        try {
+                            settings = JSON.parse(savedSettings);
+                        } catch (e) {
+                            console.warn('Failed to parse settings:', e);
+                            settings = getDefaultSettings();
+                        }
+                    } else {
+                        settings = getDefaultSettings();
+                    }
+                    
+                    // Load shared links
+                    const savedLinks = localStorage.getItem(STORAGE_KEYS.SHARED_LINKS);
+                    if (savedLinks) {
+                        try {
+                            sharedLinks = JSON.parse(savedLinks);
+                        } catch (e) {
+                            console.warn('Failed to parse shared links:', e);
+                            sharedLinks = [];
+                        }
+                    }
+                }
+                
+                function getDefaultSettings() {
+                    return {
+                        autoSaveInterval: 15,
+                        defaultFont: 'Inter, sans-serif',
+                        defaultExpiry: 168,
+                        enableSpellcheck: true,
+                        enableWordCount: true,
+                        enableAnimations: true,
+                        defaultFontSize: '16px',
+                        lineHeight: 1.6,
+                        autoIndent: true,
+                        showFormatting: true,
+                        enableImagePaste: true,
+                        enableMarkdown: false,
+                        encryptionStrength: 256,
+                        autoLock: true,
+                        clearClipboard: false,
+                        requirePassword: true,
+                        enable2FA: false,
+                        backupInterval: 24,
+                        backupEncrypted: true,
+                        theme: 'midnight'
+                    };
+                }
+                
+                function saveDocuments() {
+                    localStorage.setItem(STORAGE_KEYS.DOCUMENTS, 
+                        JSON.stringify(Object.fromEntries(documents)));
+                }
+                
+                function saveSettings() {
+                    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+                }
+                
+                function saveSharedLinks() {
+                    localStorage.setItem(STORAGE_KEYS.SHARED_LINKS, JSON.stringify(sharedLinks));
+                }
+                
+                function saveTheme(theme) {
+                    localStorage.setItem(STORAGE_KEYS.THEME, theme);
+                }
+                
+                function loadTheme() {
+                    return localStorage.getItem(STORAGE_KEYS.THEME) || 'midnight';
+                }
+                
+                return {
+                    init,
+                    get documents() { return documents; },
+                    get settings() { return settings; },
+                    get sharedLinks() { return sharedLinks; },
+                    get currentDocumentId() { return currentDocumentId; },
+                    set currentDocumentId(id) { currentDocumentId = id; },
+                    saveDocuments,
+                    saveSettings,
+                    saveSharedLinks,
+                    saveTheme,
+                    loadTheme,
+                    getDefaultSettings
+                };
+            })();
+            
+            // ============================================
+            // MODULE: UI Manager
+            // ============================================
+            const UIManager = (function() {
+                let autoSaveTimer = null;
+                
+                function showToast(message, type = 'info', duration = 3000) {
+                    const container = document.getElementById('toastContainer');
+                    const toast = document.createElement('div');
+                    toast.className = `toast toast-${type}`;
+                    
+                    const icons = {
+                        success: 'fa-check-circle',
+                        error: 'fa-exclamation-circle',
+                        warning: 'fa-exclamation-triangle',
+                        info: 'fa-info-circle'
+                    };
+                    
+                    toast.innerHTML = `
+                        <i class="fas ${icons[type] || icons.info}"></i>
+                        <span>${message}</span>
+                    `;
+                    
+                    container.appendChild(toast);
+                    
+                    // Auto remove
+                    setTimeout(() => {
+                        toast.style.opacity = '0';
+                        toast.style.transform = 'translateX(100%)';
+                        setTimeout(() => toast.remove(), 300);
+                    }, duration);
+                }
+                
+                function updateWordCount() {
+                    const editor = document.getElementById('editor');
+                    if (!editor) return;
+                    
+                    const text = editor.textContent || '';
+                    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+                    const chars = text.replace(/\s/g, '').length;
+                    
+                    const wordCountEl = document.getElementById('wordCount');
+                    if (wordCountEl) {
+                        wordCountEl.textContent = `${words} words · ${chars} characters`;
+                    }
+                }
+                
+                function updateDocumentList() {
+                    const container = document.getElementById('documentList');
+                    if (!container) return;
+                    
+                    const docs = Array.from(AppState.documents.entries())
+                        .sort((a, b) => b[1].updated - a[1].updated);
+                    
+                    container.innerHTML = docs.map(([id, doc]) => `
+                        <div class="document-item ${id === AppState.currentDocumentId ? 'active' : ''}" 
+                             data-doc-id="${id}">
+                            <div class="font-medium">${escapeHtml(doc.title || 'Untitled')}</div>
+                            <div class="text-sm text-muted">
+                                ${new Date(doc.updated).toLocaleDateString()}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                function scheduleAutoSave() {
+                    const interval = AppState.settings.autoSaveInterval * 1000;
+                    if (interval <= 0) return;
+                    
+                    clearTimeout(autoSaveTimer);
+                    autoSaveTimer = setTimeout(() => {
+                        if (AppState.currentDocumentId) {
+                            DocumentManager.saveCurrentDocument();
+                            showToast('Auto-saved', 'success', 2000);
+                        }
+                    }, interval);
+                }
+                    
+                function escapeHtml(text) {
+                    const div = document.createElement('div');
+                    div.textContent = text;
+                    return div.innerHTML;
+                }
+                
+                function showModal(modalId) {
+                    const modal = document.getElementById(modalId);
+                    if (modal) {
+                        modal.classList.remove('hidden');
+                        document.body.style.overflow = 'hidden';
+                    }
+                }
+                
+                function hideModal(modalId) {
+                    const modal = document.getElementById(modalId);
+                    if (modal) {
+                        modal.classList.add('hidden');
+                        document.body.style.overflow = '';
+                    }
+                }
+                
+                function updateSaveStatus(status) {
+                    const statusEl = document.getElementById('saveStatus');
+                    if (!statusEl) return;
+                    
+                    if (status === 'saving') {
+                        statusEl.innerHTML = '<i class="fas fa-sync fa-spin"></i> Saving...';
+                        statusEl.className = 'text-warning text-sm';
+                    } else if (status === 'saved') {
+                        statusEl.innerHTML = '<i class="fas fa-check-circle"></i> Saved';
+                        statusEl.className = 'text-success text-sm';
+                    } else if (status === 'error') {
+                        statusEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> Error';
+                        statusEl.className = 'text-error text-sm';
+                    }
+                }
+                
+                function applyEditorSettings() {
+                    const editor = document.getElementById('editor');
+                    if (!editor) return;
+                    
+                    const settings = AppState.settings;
+                    
+                    // Apply font settings
+                    editor.style.fontFamily = settings.defaultFont;
+                    editor.style.fontSize = settings.defaultFontSize;
+                    editor.style.lineHeight = settings.lineHeight.toString();
+                    
+                    // Apply spellcheck
+                    editor.spellcheck = settings.enableSpellcheck;
+                    
+                    // Toggle word count
+                    const wordCountEl = document.getElementById('wordCount');
+                    if (wordCountEl) {
+                        wordCountEl.style.display = settings.enableWordCount ? 'block' : 'none';
+                    }
+                }
+                
+                return {
+                    showToast,
+                    updateWordCount,
+                    updateDocumentList,
+                    scheduleAutoSave,
+                    showModal,
+                    hideModal,
+                    updateSaveStatus,
+                    applyEditorSettings,
+                    escapeHtml
+                };
+            })();
+            
+            // ============================================
+            // MODULE: Document Manager
+            // ============================================
+            const DocumentManager = (function() {
+                function createNewDocument() {
+                    const id = Date.now().toString();
+                    const doc = {
+                        id,
+                        title: 'Untitled Document',
+                        content: '',
+                        created: Date.now(),
+                        updated: Date.now()
+                    };
+                    
+                    AppState.documents.set(id, doc);
+                    AppState.currentDocumentId = id;
+                    AppState.saveDocuments();
+                    
+                    loadDocument(id);
+                    UIManager.updateDocumentList();
+                    UIManager.showToast('New document created', 'success');
+                }
+                
+                function loadDocument(id) {
+                    const doc = AppState.documents.get(id);
+                    if (!doc) return;
+                    
+                    AppState.currentDocumentId = id;
+                    
+                    const editor = document.getElementById('editor');
+                    const titleInput = document.getElementById('docTitle');
+                    
+                    if (editor) {
+                        editor.innerHTML = doc.content || '';
+                    }
+                    
+                    if (titleInput) {
+                        titleInput.value = doc.title || 'Untitled Document';
+                    }
+                    
+                    UIManager.updateDocumentList();
+                    UIManager.updateWordCount();
+                }
+                
+                function saveCurrentDocument() {
+                    const id = AppState.currentDocumentId;
+                    if (!id) return;
+                    
+                    const editor = document.getElementById('editor');
+                    const titleInput = document.getElementById('docTitle');
+                    
+                    if (!editor || !titleInput) return;
+                    
+                    UIManager.updateSaveStatus('saving');
+                    
+                    const doc = AppState.documents.get(id);
+                    if (doc) {
+                        doc.content = editor.innerHTML;
+                        doc.title = titleInput.value || 'Untitled Document';
+                        doc.updated = Date.now();
+                        
+                        AppState.saveDocuments();
+                        UIManager.updateDocumentList();
+                        
+                        setTimeout(() => {
+                            UIManager.updateSaveStatus('saved');
+                        }, 300);
+                    }
+                }
+                
+                function deleteDocument(id) {
+                    if (confirm('Are you sure you want to delete this document?')) {
+                        AppState.documents.delete(id);
+                        if (AppState.currentDocumentId === id) {
+                            AppState.currentDocumentId = null;
+                            document.getElementById('editor').innerHTML = '';
+                            document.getElementById('docTitle').value = '';
+                        }
+                        AppState.saveDocuments();
+                        UIManager.updateDocumentList();
+                        UIManager.showToast('Document deleted', 'success');
+                    }
+                }
+                
+                function exportDocument(id) {
+                    const doc = AppState.documents.get(id);
+                    if (!doc) return;
+                    
+                    const data = {
+                        version: '1.0',
+                        exportedAt: new Date().toISOString(),
+                        document: doc
+                    };
+                    
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `anondocs-${doc.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    
+                    UIManager.showToast('Document exported', 'success');
+                }
+                
+                function importDocument(file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            if (!data.document || !data.document.id) {
+                                throw new Error('Invalid document format');
+                            }
+                            
+                            // Generate new ID to avoid conflicts
+                            const newId = Date.now().toString();
+                            const doc = {
+                                ...data.document,
+                                id: newId,
+                                imported: Date.now()
+                            };
+                            
+                            AppState.documents.set(newId, doc);
+                            AppState.saveDocuments();
+                            loadDocument(newId);
+                            UIManager.updateDocumentList();
+                            UIManager.showToast('Document imported successfully', 'success');
+                        } catch (error) {
+                            console.error('Import error:', error);
+                            UIManager.showToast('Failed to import document', 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+                
+                function exportAsPDF() {
+                    const doc = AppState.documents.get(AppState.currentDocumentId);
+                    if (!doc) {
+                        UIManager.showToast('No document to export', 'warning');
+                        return;
+                    }
+                    
+                    // Check if jsPDF is available
+                    if (typeof window.jspdf === 'undefined') {
+                        UIManager.showToast('PDF library not loaded', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        const { jsPDF } = window.jspdf;
+                        const pdf = new jsPDF();
+                        
+                        // Add title
+                        pdf.setFontSize(20);
+                        pdf.text(doc.title, 20, 20);
+                        
+                        // Add content (simplified - strip HTML)
+                        const content = doc.content.replace(/<[^>]+>/g, ' ');
+                        pdf.setFontSize(12);
+                        const lines = pdf.splitTextToSize(content, 170);
+                        pdf.text(lines, 20, 30);
+                        
+                        // Save
+                        pdf.save(`${doc.title}.pdf`);
+                        UIManager.showToast('PDF exported successfully', 'success');
+                    } catch (error) {
+                        console.error('PDF export error:', error);
+                        UIManager.showToast('Failed to export PDF', 'error');
+                    }
+                }
+                
+                return {
+                    createNewDocument,
+                    loadDocument,
+                    saveCurrentDocument,
+                    deleteDocument,
+                    exportDocument,
+                    importDocument,
+                    exportAsPDF
+                };
+            })();
+            
+            // ============================================
+            // MODULE: Theme Manager
+            // ============================================
+            const ThemeManager = (function() {
+                const themes = ['midnight', 'aurora', 'emerald', 'crimson', 'solar', 'ocean', 'void', 'cream'];
+                
+                function applyTheme(themeName) {
+                    if (!themes.includes(themeName)) {
+                        themeName = 'midnight';
+                    }
+                    
+                    // Remove all theme classes
+                    themes.forEach(theme => {
+                        document.body.classList.remove(`theme-${theme}`);
+                    });
+                    
+                    // Add selected theme
+                    document.body.classList.add(`theme-${themeName}`);
+                    
+                    // Save to state and storage
+                    AppState.settings.theme = themeName;
+                    AppState.saveTheme(themeName);
+                    AppState.saveSettings();
+                    
+                    // Update UI
+                    document.querySelectorAll('.theme-option').forEach(el => {
+                        el.classList.toggle('active', el.dataset.theme === themeName);
+                    });
+                }
+                
+                function applyCustomTheme(primaryColor, bgColor) {
+                    // Create custom theme CSS
+                    const styleId = 'custom-theme';
+                    let style = document.getElementById(styleId);
+                    if (!style) {
+                        style = document.createElement('style');
+                        style.id = styleId;
+                        document.head.appendChild(style);
+                    }
+                    
+                    style.textContent = `
+                        .theme-custom {
+                            --accent-primary: ${primaryColor};
+                            --bg-primary: ${bgColor};
+                            --bg-secondary: color-mix(in srgb, ${bgColor} 90%, white);
+                            --bg-surface: color-mix(in srgb, ${bgColor} 80%, white);
+                            --bg-card: color-mix(in srgb, ${bgColor} 70%, white);
+                        }
+                    `;
+                    
+                    // Apply custom theme
+                    themes.forEach(theme => {
+                        document.body.classList.remove(`theme-${theme}`);
+                    });
+                    document.body.classList.add('theme-custom');
+                    
+                    AppState.settings.theme = 'custom';
+                    AppState.saveTheme('custom');
+                    AppState.saveSettings();
+                }
+                
+                function initThemeSelector() {
+                    const themeOptions = document.querySelectorAll('.theme-option');
+                    themeOptions.forEach(option => {
+                        option.addEventListener('click', () => {
+                            const theme = option.dataset.theme;
+                            applyTheme(theme);
+                        });
+                    });
+                    
+                    // Custom theme apply button
+                    const applyCustomBtn = document.getElementById('applyCustomTheme');
+                    if (applyCustomBtn) {
+                        applyCustomBtn.addEventListener('click', () => {
+                            const primaryColor = document.getElementById('customPrimary').value;
+                            const bgColor = document.getElementById('customBg').value;
+                            applyCustomTheme(primaryColor, bgColor);
+                            UIManager.hideModal('themeModal');
+                            UIManager.showToast('Custom theme applied', 'success');
+                        });
+                    }
+                }
+                
+                return {
+                    applyTheme,
+                    applyCustomTheme,
+                    initThemeSelector
+                };
+            })();
+            
+            // ============================================
+            // MODULE: Encryption Manager
+            // ============================================
+            const EncryptionManager = (function() {
+                async function encryptText(text, password) {
+                    try {
+                        // Encode password and text
+                        const enc = new TextEncoder();
+                        const passwordKey = await crypto.subtle.importKey(
+                            'raw',
+                            enc.encode(password),
+                            'PBKDF2',
+                            false,
+                            ['deriveKey']
+                        );
+                        
+                        // Generate salt and IV
+                        const salt = crypto.getRandomValues(new Uint8Array(16));
+                        const iv = crypto.getRandomValues(new Uint8Array(12));
+                        
+                        // Derive key
+                        const key = await crypto.subtle.deriveKey(
+                            {
+                                name: 'PBKDF2',
+                                salt: salt,
+                                iterations: 100000,
+                                hash: 'SHA-256'
+                            },
+                            passwordKey,
+                            { name: 'AES-GCM', length: 256 },
+                            false,
+                            ['encrypt']
+                        );
+                        
+                        // Encrypt
+                        const ciphertext = await crypto.subtle.encrypt(
+                            { name: 'AES-GCM', iv: iv },
+                            key,
+                            enc.encode(text)
+                        );
+                        
+                        // Return object with all needed data
+                        return {
+                            ciphertext: Array.from(new Uint8Array(ciphertext)),
+                            iv: Array.from(iv),
+                            salt: Array.from(salt),
+                            timestamp: Date.now()
+                        };
+                    } catch (error) {
+                        console.error('Encryption error:', error);
+                        throw new Error('Failed to encrypt document');
+                    }
+                }
+                
+                async function decryptText(encryptedData, password) {
+                    try {
+                        const enc = new TextEncoder();
+                        const passwordKey = await crypto.subtle.importKey(
+                            'raw',
+                            enc.encode(password),
+                            'PBKDF2',
+                            false,
+                            ['deriveKey']
+                        );
+                        
+                        // Derive key from salt
+                        const key = await crypto.subtle.deriveKey(
+                            {
+                                name: 'PBKDF2',
+                                salt: new Uint8Array(encryptedData.salt),
+                                iterations: 100000,
+                                hash: 'SHA-256'
+                            },
+                            passwordKey,
+                            { name: 'AES-GCM', length: 256 },
+                            false,
+                            ['decrypt']
+                        );
+                        
+                        // Decrypt
+                        const plaintext = await crypto.subtle.decrypt(
+                            { name: 'AES-GCM', iv: new Uint8Array(encryptedData.iv) },
+                            key,
+                            new Uint8Array(encryptedData.ciphertext)
+                        );
+                        
+                        return new TextDecoder().decode(plaintext);
+                    } catch (error) {
+                        console.error('Decryption error:', error);
+                        throw new Error('Failed to decrypt document. Wrong password?');
+                    }
+                }
+                
+                function createShareLink(encryptedData, options) {
+                    const payload = {
+                        v: '2.0',
+                        data: encryptedData,
+                        options: {
+                            expires: options.expires,
+                            maxViews: options.maxViews,
+                            selfDestruct: options.selfDestruct,
+                            createdAt: Date.now()
+                        }
+                    };
+                    
+                    const encoded = btoa(JSON.stringify(payload));
+                    return `${window.location.origin}${window.location.pathname}#share=${encoded}`;
+                }
+                
+                function parseShareLink(hash) {
+                    try {
+                        if (!hash.includes('#share=')) return null;
+                        
+                        const encoded = hash.split('#share=')[1];
+                        const payload = JSON.parse(atob(encoded));
+                        
+                        if (payload.v !== '2.0') {
+                            throw new Error('Invalid share link version');
+                        }
+                        
+                        return payload;
+                    } catch (error) {
+                        console.error('Parse share link error:', error);
+                        return null;
+                    }
+                }
+                
+                return {
+                    encryptText,
+                    decryptText,
+                    createShareLink,
+                    parseShareLink
+                };
+            })();
+            
+            // ============================================
+            // MODULE: Settings Manager
+            // ============================================
+            const SettingsManager = (function() {
+                function loadSettingsToUI() {
+                    const settings = AppState.settings;
+                    
+                    // Set all setting controls
+                    document.getElementById('autoSaveInterval').value = settings.autoSaveInterval;
+                    document.getElementById('defaultFont').value = settings.defaultFont;
+                    document.getElementById('defaultExpiry').value = settings.defaultExpiry;
+                    document.getElementById('enableSpellcheck').checked = settings.enableSpellcheck;
+                    document.getElementById('enableWordCount').checked = settings.enableWordCount;
+                    document.getElementById('enableAnimations').checked = settings.enableAnimations;
+                    document.getElementById('defaultFontSize').value = settings.defaultFontSize;
+                    document.getElementById('lineHeight').value = settings.lineHeight;
+                    document.getElementById('autoIndent').checked = settings.autoIndent;
+                    document.getElementById('showFormatting').checked = settings.showFormatting;
+                    document.getElementById('enableImagePaste').checked = settings.enableImagePaste;
+                    document.getElementById('enableMarkdown').checked = settings.enableMarkdown;
+                    document.getElementById('encryptionStrength').value = settings.encryptionStrength;
+                    document.getElementById('autoLock').checked = settings.autoLock;
+                    document.getElementById('clearClipboard').checked = settings.clearClipboard;
+                    document.getElementById('requirePassword').checked = settings.requirePassword;
+                    document.getElementById('enable2FA').checked = settings.enable2FA;
+                    document.getElementById('backupInterval').value = settings.backupInterval;
+                    document.getElementById('backupEncrypted').checked = settings.backupEncrypted;
+                }
+                
+                function saveSettingsFromUI() {
+                    const settings = {
+                        autoSaveInterval: parseInt(document.getElementById('autoSaveInterval').value),
+                        defaultFont: document.getElementById('defaultFont').value,
+                        defaultExpiry: parseInt(document.getElementById('defaultExpiry').value),
+                        enableSpellcheck: document.getElementById('enableSpellcheck').checked,
+                        enableWordCount: document.getElementById('enableWordCount').checked,
+                        enableAnimations: document.getElementById('enableAnimations').checked,
+                        defaultFontSize: document.getElementById('defaultFontSize').value,
+                        lineHeight: parseFloat(document.getElementById('lineHeight').value),
+                        autoIndent: document.getElementById('autoIndent').checked,
+                        showFormatting: document.getElementById('showFormatting').checked,
+                        enableImagePaste: document.getElementById('enableImagePaste').checked,
+                        enableMarkdown: document.getElementById('enableMarkdown').checked,
+                        encryptionStrength: parseInt(document.getElementById('encryptionStrength').value),
+                        autoLock: document.getElementById('autoLock').checked,
+                        clearClipboard: document.getElementById('clearClipboard').checked,
+                        requirePassword: document.getElementById('requirePassword').checked,
+                        enable2FA: document.getElementById('enable2FA').checked,
+                        backupInterval: parseInt(document.getElementById('backupInterval').value),
+                        backupEncrypted: document.getElementById('backupEncrypted').checked,
+                        theme: AppState.settings.theme
+                    };
+                    
+                    AppState.settings = settings;
+                    AppState.saveSettings();
+                    UIManager.applyEditorSettings();
+                    UIManager.showToast('Settings saved', 'success');
+                }
+                
+                function exportAllData() {
+                    const data = {
+                        version: '1.0',
+                        exportedAt: new Date().toISOString(),
+                        documents: Object.fromEntries(AppState.documents),
+                        settings: AppState.settings,
+                        sharedLinks: AppState.sharedLinks
+                    };
+                    
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `anondocs-backup-${new Date().toISOString().split('T')[0]}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    
+                    UIManager.showToast('All data exported', 'success');
+                }
+                
+                function importBackup(file) {
+                    const reader = new FileReader();
+                    reader.onload = async function(e) {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            
+                            if (!data.version || data.version !== '1.0') {
+                                throw new Error('Invalid backup file version');
+                            }
+                            
+                            if (confirm('This will replace all current data. Continue?')) {
+                                // Import documents
+                                if (data.documents) {
+                                    AppState.documents = new Map(Object.entries(data.documents));
+                                }
+                                
+                                // Import settings
+                                if (data.settings) {
+                                    AppState.settings = { ...AppState.getDefaultSettings(), ...data.settings };
+                                }
+                                
+                                // Import shared links
+                                if (data.sharedLinks) {
+                                    AppState.sharedLinks = data.sharedLinks;
+                                }
+                                
+                                // Save everything
+                                AppState.saveDocuments();
+                                AppState.saveSettings();
+                                AppState.saveSharedLinks();
+                                
+                                // Reload UI
+                                loadSettingsToUI();
+                                UIManager.applyEditorSettings();
+                                UIManager.updateDocumentList();
+                                
+                                // Apply theme
+                                if (data.settings?.theme) {
+                                    ThemeManager.applyTheme(data.settings.theme);
+                                }
+                                
+                                UIManager.showToast('Backup imported successfully', 'success');
+                            }
+                        } catch (error) {
+                            console.error('Backup import error:', error);
+                            UIManager.showToast('Failed to import backup', 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+                
+                function clearAllData() {
+                    if (confirm('This will delete ALL documents, settings, and shared links. This cannot be undone. Continue?')) {
+                        AppState.documents.clear();
+                        AppState.settings = AppState.getDefaultSettings();
+                        AppState.sharedLinks = [];
+                        AppState.currentDocumentId = null;
+                        
+                        AppState.saveDocuments();
+                        AppState.saveSettings();
+                        AppState.saveSharedLinks();
+                        
+                        // Reset UI
+                        document.getElementById('editor').innerHTML = '';
+                        document.getElementById('docTitle').value = '';
+                        UIManager.updateDocumentList();
+                        loadSettingsToUI();
+                        
+                        UIManager.showToast('All data cleared', 'success');
+                    }
+                }
+                
+                return {
+                    loadSettingsToUI,
+                    saveSettingsFromUI,
+                    exportAllData,
+                    importBackup,
+                    clearAllData
+                };
+            })();
+            
+            // ============================================
+            // MODULE: Share Manager
+            // ============================================
+            const ShareManager = (function() {
+                function calculatePasswordStrength(password) {
+                    if (!password) return 0;
+                    
+                    let strength = 0;
+                    if (password.length >= 8) strength += 25;
+                    if (password.length >= 12) strength += 25;
+                    if (/[A-Z]/.test(password)) strength += 25;
+                    if (/[0-9]/.test(password)) strength += 25;
+                    if (/[^A-Za-z0-9]/.test(password)) strength += 25;
+                    
+                    return Math.min(strength, 100);
+                }
+                
+                async function createSecureShare() {
+                    const password = document.getElementById('sharePassword').value;
+                    const confirmPassword = document.getElementById('sharePasswordConfirm').value;
+                    const title = document.getElementById('shareTitle').value || 'Shared Document';
+                    const expires = parseInt(document.getElementById('shareExpiry').value);
+                    const maxViews = parseInt(document.getElementById('maxViews').value);
+                    const selfDestruct = document.getElementById('selfDestruct').checked;
+                    const notifyOnOpen = document.getElementById('notifyOnOpen').checked;
+                    const allowDownload = document.getElementById('allowDownload').checked;
+                    
+                    // Validate
+                    if (!password) {
+                        UIManager.showToast('Password is required', 'error');
+                        return;
+                    }
+                    
+                    if (password !== confirmPassword) {
+                        UIManager.showToast('Passwords do not match', 'error');
+                        return;
+                    }
+                    
+                    const strength = calculatePasswordStrength(password);
+                    if (strength < 50) {
+                        if (!confirm('Password is weak. Continue anyway?')) {
+                            return;
+                        }
+                    }
+                    
+                    // Get current document content
+                    const doc = AppState.documents.get(AppState.currentDocumentId);
+                    if (!doc) {
+                        UIManager.showToast('No document to share', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        UIManager.showToast('Encrypting document...', 'info');
+                        
+                        // Encrypt the content
+                        const encryptedData = await EncryptionManager.encryptText(doc.content, password);
+                        
+                        // Create share options
+                        const options = {
+                            title: title,
+                            expires: expires > 0 ? Date.now() + (expires * 60 * 60 * 1000) : 0,
+                            maxViews: maxViews,
+                            selfDestruct: selfDestruct,
+                            notifyOnOpen: notifyOnOpen,
+                            allowDownload: allowDownload,
+                            createdAt: Date.now()
+                        };
+                        
+                        // Create share record
+                        const shareRecord = {
+                            id: Date.now().toString(),
+                            documentId: AppState.currentDocumentId,
+                            encryptedData: encryptedData,
+                            options: options,
+                            created: Date.now()
+                        };
+                        
+                        // Save to shared links
+                        AppState.sharedLinks.unshift(shareRecord);
+                        AppState.saveSharedLinks();
+                        
+                        // Generate share link
+                        const shareLink = EncryptionManager.createShareLink(encryptedData, options);
+                        
+                        // Show result modal
+                        document.getElementById('shareLink').value = shareLink;
+                        document.getElementById('expiryInfo').textContent = 
+                            options.expires ? new Date(options.expires).toLocaleString() : 'Never';
+                        document.getElementById('viewsInfo').textContent = 
+                            options.maxViews || 'Unlimited';
+                        document.getElementById('destructInfo').textContent = 
+                            options.selfDestruct ? 'Yes' : 'No';
+                        
+                        // Generate QR code
+                        const qrContainer = document.getElementById('qrCode');
+                        qrContainer.innerHTML = '';
+                        QRCode.toCanvas(qrContainer, shareLink, {
+                            width: 200,
+                            margin: 2,
+                            color: {
+                                dark: '#000000',
+                                light: '#ffffff'
+                            }
+                        });
+                        
+                        // Switch modals
+                        UIManager.hideModal('shareModal');
+                        UIManager.showModal('shareResultModal');
+                        
+                        UIManager.showToast('Secure link created', 'success');
+                        
+                    } catch (error) {
+                        console.error('Share creation error:', error);
+                        UIManager.showToast('Failed to create secure share', 'error');
+                    }
+                }
+                
+                function setupShareForm() {
+                    const passwordInput = document.getElementById('sharePassword');
+                    const strengthBar = document.getElementById('passwordStrengthBar');
+                    const strengthText = document.getElementById('passwordStrengthText');
+                    
+                    if (passwordInput) {
+                        passwordInput.addEventListener('input', () => {
+                            const strength = calculatePasswordStrength(passwordInput.value);
+                            strengthBar.style.width = `${strength}%`;
+                            
+                            if (strength < 30) {
+                                strengthBar.style.backgroundColor = 'var(--error)';
+                                strengthText.textContent = 'Weak';
+                                strengthText.className = 'text-sm text-error';
+                            } else if (strength < 70) {
+                                strengthBar.style.backgroundColor = 'var(--warning)';
+                                strengthText.textContent = 'Medium';
+                                strengthText.className = 'text-sm text-warning';
+                            } else {
+                                strengthBar.style.backgroundColor = 'var(--success)';
+                                strengthText.textContent = 'Strong';
+                                strengthText.className = 'text-sm text-success';
+                            }
+                        });
+                    }
+                    
+                    const generateBtn = document.getElementById('generateShareLink');
+                    if (generateBtn) {
+                        generateBtn.addEventListener('click', createSecureShare);
+                    }
+                    
+                    const copyBtn = document.getElementById('copyShareLink');
+                    if (copyBtn) {
+                        copyBtn.addEventListener('click', () => {
+                            const link = document.getElementById('shareLink').value;
+                            navigator.clipboard.writeText(link).then(() => {
+                                UIManager.showToast('Link copied to clipboard', 'success');
+                            });
+                        });
+                    }
+                    
+                    const downloadQRBtn = document.getElementById('downloadQRBtn');
+                    if (downloadQRBtn) {
+                        downloadQRBtn.addEventListener('click', () => {
+                            const canvas = document.querySelector('#qrCode canvas');
+                            if (canvas) {
+                                const link = document.createElement('a');
+                                link.download = 'anondocs-qr.png';
+                                link.href = canvas.toDataURL('image/png');
+                                link.click();
+                                UIManager.showToast('QR code downloaded', 'success');
+                            }
+                        });
+                    }
+                }
+                
+                return {
+                    setupShareForm
+                };
+            })();
+            
+            // ============================================
+            // MODULE: Event Handlers & Initialization
+            // ============================================
+            const EventManager = (function() {
+                function setupEventListeners() {
+                    // Modal close buttons
+                    document.querySelectorAll('.close-modal').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const modalId = btn.dataset.modal;
+                            UIManager.hideModal(modalId);
+                        });
+                    });
+                    
+                    // Overlay close
+                    document.querySelectorAll('.modal-overlay').forEach(modal => {
+                        modal.addEventListener('click', (e) => {
+                            if (e.target === modal) {
+                                modal.classList.add('hidden');
+                                document.body.style.overflow = '';
+                            }
+                        });
+                    });
+                    
+                    // Tab switching
+                    document.querySelectorAll('.tab').forEach(tab => {
+                        tab.addEventListener('click', () => {
+                            const tabId = tab.dataset.tab;
+                            
+                            // Update active tab
+                            document.querySelectorAll('.tab').forEach(t => {
+                                t.classList.remove('active');
+                            });
+                            tab.classList.add('active');
+                            
+                            // Show corresponding content
+                            document.querySelectorAll('.tab-content').forEach(content => {
+                                content.classList.add('hidden');
+                            });
+                            document.getElementById(`${tabId}Tab`).classList.remove('hidden');
+                        });
+                    });
+                    
+                    // Toolbar buttons
+                    document.querySelectorAll('[data-command]').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const command = btn.dataset.command;
+                            document.execCommand(command, false, null);
+                            document.getElementById('editor').focus();
+                        });
+                    });
+                    
+                    // Font controls
+                    document.getElementById('fontFamily').addEventListener('change', (e) => {
+                        document.execCommand('fontName', false, e.target.value);
+                    });
+                    
+                    document.getElementById('fontSize').addEventListener('change', (e) => {
+                        document.execCommand('fontSize', false, e.target.value);
+                    });
+                    
+                    // Color controls
+                    document.getElementById('textColor').addEventListener('change', (e) => {
+                        document.execCommand('foreColor', false, e.target.value);
+                    });
+                    
+                    document.getElementById('highlightColor').addEventListener('change', (e) => {
+                        document.execCommand('hiliteColor', false, e.target.value);
+                    });
+                    
+                    // Main buttons
+                    document.getElementById('newDocBtn').addEventListener('click', () => {
+                        DocumentManager.createNewDocument();
+                    });
+                    
+                    document.getElementById('saveDocBtn').addEventListener('click', () => {
+                        DocumentManager.saveCurrentDocument();
+                        UIManager.showToast('Document saved', 'success');
+                    });
+                    
+                    document.getElementById('shareDocBtn').addEventListener('click', () => {
+                        if (!AppState.currentDocumentId) {
+                            UIManager.showToast('Create or open a document first', 'warning');
+                            return;
+                        }
+                        
+                        // Pre-fill title
+                        const doc = AppState.documents.get(AppState.currentDocumentId);
+                        if (doc) {
+                            document.getElementById('shareTitle').value = doc.title;
+                        }
+                        
+                        UIManager.showModal('shareModal');
+                    });
+                    
+                    document.getElementById('themeToggle').addEventListener('click', () => {
+                        UIManager.showModal('themeModal');
+                    });
+                    
+                    document.getElementById('settingsToggle').addEventListener('click', () => {
+                        SettingsManager.loadSettingsToUI();
+                        UIManager.showModal('settingsModal');
+                    });
+                    
+                    document.getElementById('guideToggle').addEventListener('click', () => {
+                        UIManager.showModal('guideModal');
+                    });
+                    
+                    // Document list clicks
+                    document.addEventListener('click', (e) => {
+                        const docItem = e.target.closest('.document-item');
+                        if (docItem) {
+                            const docId = docItem.dataset.docId;
+                            DocumentManager.loadDocument(docId);
+                        }
+                    });
+                    
+                    // Editor events
+                    const editor = document.getElementById('editor');
+                    if (editor) {
+                        editor.addEventListener('input', () => {
+                            UIManager.updateWordCount();
+                            UIManager.scheduleAutoSave();
+                        });
+                        
+                        editor.addEventListener('keydown', (e) => {
+                            // Save shortcut
+                            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                                e.preventDefault();
+                                DocumentManager.saveCurrentDocument();
+                                UIManager.showToast('Document saved', 'success');
+                            }
+                            
+                            // New document shortcut
+                            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                                e.preventDefault();
+                                DocumentManager.createNewDocument();
+                            }
+                            
+                            // Bold shortcut
+                            if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                                e.preventDefault();
+                                document.execCommand('bold', false, null);
+                            }
+                            
+                            // Italic shortcut
+                            if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+                                e.preventDefault();
+                                document.execCommand('italic', false, null);
+                            }
+                            
+                            // Underline shortcut
+                            if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+                                e.preventDefault();
+                                document.execCommand('underline', false, null);
+                            }
+                        });
+                    }
+                    
+                    // Title input
+                    document.getElementById('docTitle').addEventListener('input', () => {
+                        UIManager.scheduleAutoSave();
+                    });
+                    
+                    // Import/Export buttons
+                    document.getElementById('importDocBtn').addEventListener('click', () => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = '.json,.txt,.html';
+                        input.onchange = (e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                                DocumentManager.importDocument(file);
+                            }
+                        };
+                        input.click();
+                    });
+                    
+                    document.getElementById('exportDocBtn').addEventListener('click', () => {
+                        if (AppState.currentDocumentId) {
+                            DocumentManager.exportDocument(AppState.currentDocumentId);
+                        } else {
+                            UIManager.showToast('No document to export', 'warning');
+                        }
+                    });
+                    
+                    document.getElementById('downloadBtn').addEventListener('click', () => {
+                        const select = document.createElement('select');
+                        select.innerHTML = `
+                            <option value="txt">Download as TXT</option>
+                            <option value="pdf">Download as PDF</option>
+                            <option value="html">Download as HTML</option>
+                        `;
+                        select.onchange = () => {
+                            if (select.value === 'pdf') {
+                                DocumentManager.exportAsPDF();
+                            } else if (select.value === 'txt') {
+                                const doc = AppState.documents.get(AppState.currentDocumentId);
+                                if (doc) {
+                                    const blob = new Blob([doc.content.replace(/<[^>]+>/g, ' ')], 
+                                        { type: 'text/plain' });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = `${doc.title}.txt`;
+                                    a.click();
+                                    URL.revokeObjectURL(url);
+                                    UIManager.showToast('Document exported as TXT', 'success');
+                                }
+                            } else if (select.value === 'html') {
+                                const doc = AppState.documents.get(AppState.currentDocumentId);
+                                if (doc) {
+                                    const blob = new Blob([doc.content], { type: 'text/html' });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = `${doc.title}.html`;
+                                    a.click();
+                                    URL.revokeObjectURL(url);
+                                    UIManager.showToast('Document exported as HTML', 'success');
+                                }
+                            }
+                        };
+                        
+                        // Trigger change by clicking
+                        const clickEvent = new MouseEvent('click');
+                        select.dispatchEvent(clickEvent);
+                    });
+                    
+                    document.getElementById('printBtn').addEventListener('click', () => {
+                        window.print();
+                    });
+                    
+                    document.getElementById('findBtn').addEventListener('click', () => {
+                        const term = prompt('Find text:');
+                        if (term) {
+                            const editor = document.getElementById('editor');
+                            const content = editor.innerHTML;
+                            const regex = new RegExp(term, 'gi');
+                            const highlighted = content.replace(regex, 
+                                '<mark style="background-color: yellow;">$&</mark>');
+                            editor.innerHTML = highlighted;
+                            UIManager.showToast(`Found ${(content.match(regex) || []).length} matches`, 'info');
+                        }
+                    });
+                    
+                    // Settings buttons
+                    document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+                        SettingsManager.saveSettingsFromUI();
+                        UIManager.hideModal('settingsModal');
+                    });
+                    
+                    document.getElementById('exportAllBtn').addEventListener('click', () => {
+                        SettingsManager.exportAllData();
+                    });
+                    
+                    document.getElementById('importBackupBtn').addEventListener('click', () => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = '.json';
+                        input.onchange = (e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                                SettingsManager.importBackup(file);
+                            }
+                        };
+                        input.click();
+                    });
+                    
+                    document.getElementById('clearAllData').addEventListener('click', () => {
+                        SettingsManager.clearAllData();
+                    });
+                }
+                
+                function init() {
+                    // Initialize state
+                    AppState.init();
+                    
+                    // Apply saved theme
+                    const savedTheme = AppState.loadTheme();
+                    ThemeManager.applyTheme(savedTheme);
+                    
+                    // Setup theme selector
+                    ThemeManager.initThemeSelector();
+                    
+                    // Setup event listeners
+                    setupEventListeners();
+                    
+                    // Setup share form
+                    ShareManager.setupShareForm();
+                    
+                    // Apply editor settings
+                    UIManager.applyEditorSettings();
+                    
+                    // Load document list
+                    UIManager.updateDocumentList();
+                    
+                    // Load first document if exists
+                    if (AppState.documents.size > 0) {
+                        const firstDoc = Array.from(AppState.documents.keys())[0];
+                        DocumentManager.loadDocument(firstDoc);
+                    } else {
+                        // Create initial document
+                        DocumentManager.createNewDocument();
+                    }
+                    
+                    // Handle hash links (for shared documents)
+                    if (window.location.hash) {
+                        const payload = EncryptionManager.parseShareLink(window.location.hash);
+                        if (payload) {
+                            // Prompt for password
+                            const password = prompt('Enter password to view shared document:');
+                            if (password) {
+                                (async () => {
+                                    try {
+                                        const decrypted = await EncryptionManager.decryptText(
+                                            payload.data, 
+                                            password
+                                        );
+                                        
+                                        // Create a viewer modal
+                                        const modal = document.createElement('div');
+                                        modal.className = 'modal-overlay';
+                                        modal.innerHTML = `
+                                            <div class="modal">
+                                                <div class="modal-header">
+                                                    <h3>Shared Document</h3>
+                                                    <button class="btn btn-ghost btn-sm close-viewer">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="prose max-w-none">${decrypted}</div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button class="btn btn-primary" id="saveSharedDoc">
+                                                        Save to My Documents
+                                                    </button>
+                                                    <button class="btn btn-secondary close-viewer">
+                                                        Close
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        `;
+                                        
+                                        document.body.appendChild(modal);
+                                        
+                                        // Add close handlers
+                                        modal.querySelectorAll('.close-viewer').forEach(btn => {
+                                            btn.addEventListener('click', () => {
+                                                modal.remove();
+                                                window.location.hash = '';
+                                            });
+                                        });
+                                        
+                                        // Add save handler
+                                        document.getElementById('saveSharedDoc').addEventListener('click', () => {
+                                            const id = Date.now().toString();
+                                            AppState.documents.set(id, {
+                                                id,
+                                                title: `Shared Document ${new Date().toLocaleDateString()}`,
+                                                content: decrypted,
+                                                created: Date.now(),
+                                                updated: Date.now()
+                                            });
+                                            AppState.saveDocuments();
+                                            DocumentManager.loadDocument(id);
+                                            UIManager.updateDocumentList();
+                                            modal.remove();
+                                            window.location.hash = '';
+                                            UIManager.showToast('Document saved', 'success');
+                                        });
+                                        
+                                    } catch (error) {
+                                        UIManager.showToast('Failed to decrypt document. Wrong password?', 'error');
+                                        window.location.hash = '';
+                                    }
+                                })();
+                            }
+                        }
+                    }
+                    
+                    // Show welcome message
+                    setTimeout(() => {
+                        if (AppState.documents.size === 1) {
+                            UIManager.showToast('Welcome to AnonDocs Secure! Click the guide button for help.', 'info', 5000);
+                        }
+                    }, 1000);
+                }
+                
+                return {
+                    init
+                };
+            })();
+            
+            // ============================================
+            // INITIALIZE APPLICATION
+            // ============================================
+            document.addEventListener('DOMContentLoaded', () => {
+                EventManager.init();
+            });
+            
+            // Make some modules available globally for debugging
+            window.AnonDocs = {
+                AppState,
+                UIManager,
+                DocumentManager,
+                ThemeManager,
+                EncryptionManager,
+                SettingsManager,
+                ShareManager
+            };
+            
+        })();
+    </script>
+</body>
+</html>
