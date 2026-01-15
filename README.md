@@ -31,7 +31,7 @@ AnonDocs Secure is a **privacy-first document editor** that enables you to creat
 5. **Share the link** - Recipients need password to view
 6. **Document self-destructs** - After viewing or expiration
 
-**[🌐 Live Web App](https://aliriyaj007.github.io/AnonDocs/)** • **[⬇️ Direct Download](https://raw.githubusercontent.com/Aliriyaj007/AnonDocs/main/anondocs-secure.html)**
+**[🌐 Live Web App](https://aliriyaj007.github.io/AnonDocs/)** • **[⬇️ Direct Download](https://raw.githubusercontent.com/Aliriyaj007/AnonDocs/main/index.html)**
 
 ## 🎨 **Features at a Glance**
 
@@ -482,7 +482,7 @@ A developer focused on privacy, security, and accessible technology.
 | **Email** | aliriyaj007@protonmail.com | Security reports, private inquiries |
 | **LinkedIn** | [linkedin.com/in/Aliriyaj007](https://linkedin.com/in/Aliriyaj007) | Professional contact |
 | **Web App** | [aliriyaj007.github.io/AnonDocs](https://aliriyaj007.github.io/AnonDocs) | Live deployment |
-| **Download** | [Direct HTML file](https://raw.githubusercontent.com/Aliriyaj007/AnonDocs/main/anondocs-secure.html) | Offline usage |
+| **Download** | [Direct HTML file](https://raw.githubusercontent.com/Aliriyaj007/AnonDocs/main/index.html) | Offline usage |
 
 ## 🌟 **Acknowledgments**
 
